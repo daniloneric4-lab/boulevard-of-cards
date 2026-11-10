@@ -11,13 +11,13 @@ export const sportLabel = (k: string | null | undefined) => SPORTS.find((s) => s
 export function money(cents: number | null | undefined, currency = 'RSD') {
   if (cents == null) return 'Cena uskoro';
   const v = cents / 100;
-  return `${v.toLocaleString('sr-RS', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ${currency}`;
+  return `${v.toLocaleString('sr-Latn-RS', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ${currency}`;
 }
 
 export function date(d: string | null | undefined, withTime = false) {
   if (!d) return '—';
   const x = new Date(d);
-  return x.toLocaleString('sr-RS', {
+  return x.toLocaleString('sr-Latn-RS', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',

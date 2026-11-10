@@ -1,12 +1,21 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import ProductCard, { type Product } from '@/components/ProductCard';
-import { SPORTS, date, money, sportLabel } from '@/lib/format';
+import LogoIntro from '@/components/LogoIntro';
+import { date, money, sportLabel } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
+const CATS = [
+  { key: 'football', label: 'Fudbal', sub: 'Liga šampiona, Premijer liga, Bundesliga', video: 'fudbal' },
+  { key: 'f1', label: 'F1', sub: 'Chrome, Sapphire, Turbo Attax', video: 'f1' },
+  { key: 'nba', label: 'NBA', sub: 'Chrome, Flagship, Finest', video: 'nba' },
+  { key: 'nfl', label: 'NFL', sub: 'Chrome, Midnight, rookie klasa', video: 'nfl' },
+];
+
 export default async function Home() {
   const supabase = await createClient();
+  const today = new Date().toISOString().slice(0, 10);
   const [{ data: products }, { data: releases }] = await Promise.all([
     supabase
       .from('products')
@@ -16,31 +25,46 @@ export default async function Home() {
       .limit(8),
     supabase
       .from('releases')
-      .select('id, name, sport, box_format, release_date, sale_type, us_price_cents, draw_opens_at')
+      .select('id, name, sport, box_format, release_date, sale_type, us_price_cents')
       .eq('is_visible', true)
-      .gte('release_date', new Date().toISOString().slice(0, 10))
+      .gte('release_date', today)
       .order('release_date', { ascending: true })
-      .limit(6),
+      .limit(8),
   ]);
+  const nextDraw = (releases ?? []).find((r) => r.sale_type === 'draw');
 
   return (
     <>
-      <section className="hero" aria-label="Uvod">
-        <video autoPlay muted loop playsInline preload="auto" poster="/hero-stadion.jpg" aria-hidden="true">
-          <source src="/hero-stadion.mp4" type="video/mp4" />
+      <section className="hero hero-home" aria-label="Boulevard of Cards">
+        <video autoPlay muted loop playsInline preload="auto" poster="/hero-kartice.jpg" aria-hidden="true">
+          <source src="/hero-kartice.mp4" type="video/mp4" />
         </video>
-        <div className="hero-in">
-          <span className="kicker">Topps · Balkan</span>
-          <h1>
-            Kartice, kutije i izvlačenja
-            <br />
-            na jednom mestu.
+        <div className="hero-glow" aria-hidden="true" />
+        <div className="hero-in hero-center">
+          <div className="hero-meta mono" aria-hidden="true">
+            <span>
+              Topps · Balkan
+              <br />
+              RSD · EUR · BAM · MKD
+            </span>
+            <span style={{ textAlign: 'right' }}>
+              Beograd · 2026
+              <br />
+              Samo Topps proizvodi
+            </span>
+          </div>
+          <h1 className="logo-h1">
+            <span className="sr-only">Boulevard of Cards</span>
+            <LogoIntro />
           </h1>
-          <p className="lead">
-            Zvanična prodavnica Topps kutija, preorderi i izvlačenja za nova izdanja. Fudbal, F1, NBA i NFL, sa dostavom
-            po regionu.
-          </p>
-          <div className="row">
+          <p className="lead">Kolekcionari Balkana, na jednom bulevaru.</p>
+          {nextDraw ? (
+            <span className="draw-pill">
+              <span className="live-dot" aria-hidden="true" />
+              Sledeće izvlačenje: {nextDraw.name.replace(/^20\d\d(-\d\d)? Topps /, '')} · {date(nextDraw.release_date)}
+            </span>
+          ) : null}
+          <div className="row" style={{ justifyContent: 'center' }}>
             <Link href="/prodavnica" className="btn btn-red">
               Otvori prodavnicu
             </Link>
@@ -49,18 +73,28 @@ export default async function Home() {
             </Link>
           </div>
         </div>
+        <div className="hero-arc" aria-hidden="true" />
       </section>
 
       <section className="wrap section stack">
-        <div className="row between">
-          <h2>Kategorije</h2>
-        </div>
-        <div className="chips">
-          {SPORTS.map((s) => (
-            <Link key={s.key} href={`/prodavnica?sport=${s.key}`} className="chip">
-              {s.label}
+        <h2>Kategorije</h2>
+        <div className="cat-grid">
+          {CATS.map((c) => (
+            <Link key={c.key} href={`/prodavnica?sport=${c.key}`} className="cat-tile">
+              <video autoPlay muted loop playsInline preload="metadata" poster={`/kat-${c.video}.jpg`} aria-hidden="true">
+                <source src={`/kat-${c.video}.mp4`} type="video/mp4" />
+              </video>
+              <span className="cat-text">
+                <b>{c.label}</b>
+                <span>{c.sub}</span>
+              </span>
             </Link>
           ))}
+        </div>
+        <div className="chips">
+          <Link href="/prodavnica?sport=other" className="chip">
+            Oprema i ostalo
+          </Link>
         </div>
       </section>
 
@@ -78,7 +112,7 @@ export default async function Home() {
             ))}
           </div>
         ) : (
-          <div className="alert alert-info">Prvi proizvodi stižu uskoro. Admin ih dodaje u admin panelu.</div>
+          <div className="alert alert-info">Prvi proizvodi stižu uskoro.</div>
         )}
       </section>
 
