@@ -11,12 +11,13 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
   const supabase = await createClient();
   let query = supabase.from('profiles').select('id, username, display_name, city, role, is_verified, is_suspended, created_at').order('created_at', { ascending: false }).limit(200);
   if (q) query = query.or(`username.ilike.%${q.replace(/[%_,()]/g, '')}%,display_name.ilike.%${q.replace(/[%_,()]/g, '')}%`);
-  const { data: users } = await query;
+  const [{ data: users }, { data: auth }] = await Promise.all([query, supabase.rpc('admin_list_users')]);
+  const A = new Map(((auth ?? []) as { id: string; email: string; email_confirmed_at: string | null; last_sign_in_at: string | null }[]).map((a) => [a.id, a]));
   return (
     <>
       <div className="stack" style={{ gap: 6 }}>
         <h1 style={{ fontSize: 36 }}>Korisnici</h1>
-        <p className="muted">Verifikacija prodavaca i suspenzije. Admin ulogu dodeljuje samo vlasnik naloga Boulevard of Cards (lista admin e-pošta u bazi).</p>
+        <p className="muted">Svi nalozi napravljeni na sajtu ({(auth ?? []).length}), sa e-poštom, potvrdom i poslednjom prijavom. Verifikacija prodavaca i suspenzije. Admin ulogu dodeljuje samo vlasnik naloga Boulevard of Cards (lista admin e-pošta u bazi).</p>
       </div>
       <form className="row" action="/admin/korisnici">
         <input className="inp" name="q" defaultValue={q ?? ''} placeholder="Korisničko ime ili ime" style={{ maxWidth: 360 }} />
@@ -27,6 +28,9 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
           <thead>
             <tr>
               <th>Korisnik</th>
+              <th>E-pošta</th>
+              <th>Potvrđen</th>
+              <th>Poslednja prijava</th>
               <th>Grad</th>
               <th>Član od</th>
               <th>Uloga</th>
@@ -45,6 +49,9 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
                     {u.display_name}
                   </div>
                 </td>
+                <td className="mono" style={{ fontSize: 13 }}>{A.get(u.id)?.email ?? '—'}</td>
+                <td>{A.get(u.id)?.email_confirmed_at ? <span className="pill pill-green">Da</span> : <span className="pill pill-red">Čeka mejl</span>}</td>
+                <td className="mono">{A.get(u.id)?.last_sign_in_at ? date(A.get(u.id)!.last_sign_in_at, true) : 'Nikad'}</td>
                 <td>{u.city ?? '—'}</td>
                 <td className="mono">{date(u.created_at)}</td>
                 <td>{u.role === 'admin' ? <span className="pill pill-red">Admin</span> : 'Korisnik'}</td>
