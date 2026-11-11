@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import ProductCard, { type Product } from '@/components/ProductCard';
 import LogoIntro from '@/components/LogoIntro';
+import RotatingVideo from '@/components/RotatingVideo';
 import { date, money, sportLabel } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
@@ -81,9 +82,7 @@ export default async function Home() {
         <div className="cat-grid">
           {CATS.map((c) => (
             <Link key={c.key} href={`/prodavnica?sport=${c.key}`} className="cat-tile">
-              <video autoPlay muted loop playsInline preload="metadata" poster={`/kat-${c.video}.jpg`} aria-hidden="true">
-                <source src={`/kat-${c.video}.mp4`} type="video/mp4" />
-              </video>
+              <RotatingVideo category={c.key} preload="metadata" />
               <span className="cat-text">
                 <b>{c.label}</b>
                 <span>{c.sub}</span>

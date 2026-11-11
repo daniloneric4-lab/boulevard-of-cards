@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import ProductCard, { type Product } from '@/components/ProductCard';
+import RotatingVideo from '@/components/RotatingVideo';
 import { SPORTS } from '@/lib/format';
 
 export const metadata: Metadata = { title: 'Prodavnica' };
@@ -25,9 +26,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ s
   return (
     <>
     <section className="hero hero-shop" aria-label="Prodavnica">
-      <video key={hero.video} autoPlay muted loop playsInline preload="auto" poster={hero.poster} aria-hidden="true">
-        <source src={hero.video} type="video/mp4" />
-      </video>
+      <RotatingVideo key={sport ?? 'all'} category={sport && HERO[sport] ? sport : 'all'} />
       <div className="hero-in">
         <span className="kicker">Zvanična prodavnica</span>
         <h1>{hero.title}</h1>
