@@ -4,6 +4,8 @@ import { createClient } from '@/lib/supabase/server';
 import ProductCard, { type Product } from '@/components/ProductCard';
 import RotatingVideo from '@/components/RotatingVideo';
 import { SPORTS } from '@/lib/format';
+import ListingTile from '@/components/ListingTile';
+import { LISTING_SELECT, type ListingRow } from '@/lib/listings';
 
 export const metadata: Metadata = { title: 'Prodavnica' };
 export const dynamic = 'force-dynamic';
@@ -19,7 +21,10 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ s
     .order('created_at', { ascending: false });
   if (sport && SPORTS.some((s) => s.key === sport)) query = query.eq('sport', sport);
   if (q) query = query.ilike('name', `%${q.replace(/[%_]/g, '')}%`);
-  const { data: products, error } = await query;
+  let lq = supabase.from('listings').select(LISTING_SELECT).eq('status', 'active').neq('mode', 'showcase').order('created_at', { ascending: false }).limit(24);
+  if (sport && SPORTS.some((s) => s.key === sport)) lq = lq.eq('sport', sport);
+  if (q) lq = lq.ilike('title', `%${q.replace(/[%_]/g, '')}%`);
+  const [{ data: products, error }, { data: listings }] = await Promise.all([query, lq]);
 
   const hero = HERO[sport ?? ''] ?? HERO[''];
 
@@ -58,6 +63,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ s
       </div>
 
       {error ? <div className="alert alert-err">Prodavnica trenutno ne može da se učita.</div> : null}
+      <h2>Zvanična ponuda</h2>
       {products && products.length ? (
         <div className="grid">
           {(products as Product[]).map((p) => (
@@ -67,6 +73,39 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ s
       ) : (
         <div className="alert alert-info">Nema proizvoda za ovaj izbor.</div>
       )}
+
+      <div className="row between" style={{ marginTop: 16 }}>
+        <h2>Od kolekcionara</h2>
+        <Link href="/aukcije" className="btn btn-ghost btn-sm">
+          Aukcije
+        </Link>
+      </div>
+      {listings && listings.length ? (
+        <div className="grid-tiles">
+          {(listings as unknown as ListingRow[]).map((l) => (
+            <ListingTile key={l.id} l={l} />
+          ))}
+        </div>
+      ) : (
+        <div className="alert alert-info">Još nema oglasa kolekcionara za ovaj izbor.</div>
+      )}
+
+      <div className="two" style={{ marginTop: 8 }}>
+        <div className="card-dark stack">
+          <h3>Novac je zaštićen.</h3>
+          <p style={{ color: 'var(--bc-line)' }}>Prodavac dobija novac tek kad potvrdiš da je stiglo ono što si kupio.</p>
+          <Link href="/pomoc#zastita" className="btn btn-ghost" style={{ alignSelf: 'flex-start', color: '#fff', borderColor: 'var(--bc-line-dk)' }}>
+            Kako radi
+          </Link>
+        </div>
+        <div className="card stack">
+          <h3>Imaš kartice?</h3>
+          <p className="muted">Slikaj ih, popuni podatke i izaberi cenu. Oglas za 30 sekundi.</p>
+          <Link href="/prodaj" className="btn btn-red" style={{ alignSelf: 'flex-start' }}>
+            Postavi oglas
+          </Link>
+        </div>
+      </div>
     </div>
     </>
   );

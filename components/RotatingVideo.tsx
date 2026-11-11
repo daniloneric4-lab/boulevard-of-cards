@@ -39,6 +39,7 @@ export default function RotatingVideo({ category, preload = 'auto' }: { category
       poster={v.poster}
       aria-hidden="true"
       src={idx === null ? undefined : v.src}
+      style={v.pos ? { objectPosition: v.pos } : undefined}
     />
   );
 }

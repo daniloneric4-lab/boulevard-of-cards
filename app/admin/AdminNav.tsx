@@ -7,10 +7,18 @@ const ITEMS: [string, string, keyof Counts | null][] = [
   ['/admin/proizvodi', 'Proizvodi i zalihe', 'proizvodi'],
   ['/admin/porudzbine', 'Porudžbine', 'porudzbine'],
   ['/admin/izdanja', 'Izdanja', 'izdanja'],
+  ['/admin/izvlacenja', 'Izvlačenja', 'izvlacenja'],
+  ['/admin/live', 'Live otvaranja', null],
+  ['/admin/usluge', 'Usluge', 'usluge'],
+  ['/admin/sporovi', 'Sporovi i prijave', 'sporovi'],
+  ['/admin/isplate', 'Isplate', 'isplate'],
+  ['/admin/korisnici', 'Korisnici', null],
+  ['/admin/katalog', 'Katalog', null],
+  ['/admin/podrska', 'Poruke podrške', 'podrska'],
   ['/admin/podesavanja', 'Podešavanja', null],
   ['/admin/dnevnik', 'Dnevnik', null],
 ];
-type Counts = { proizvodi: number; porudzbine: number; izdanja: number };
+type Counts = { proizvodi: number; porudzbine: number; izdanja: number; izvlacenja: number; usluge: number; sporovi: number; isplate: number; podrska: number };
 
 export default function AdminNav({ counts }: { counts: Counts }) {
   const path = usePathname();

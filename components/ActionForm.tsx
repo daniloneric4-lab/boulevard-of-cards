@@ -9,12 +9,14 @@ export default function ActionForm({
   submit,
   className = 'stack',
   style,
+  btn = 'btn btn-dark',
 }: {
   action: (s: State, f: FormData) => Promise<State>;
   children: React.ReactNode;
   submit: string;
   className?: string;
   style?: React.CSSProperties;
+  btn?: string;
 }) {
   const [state, run, pending] = useActionState(action, { ok: false, msg: '' });
   return (
@@ -25,7 +27,7 @@ export default function ActionForm({
           {state.msg}
         </div>
       ) : null}
-      <button className="btn btn-dark" disabled={pending} style={{ alignSelf: 'flex-start' }}>
+      <button className={btn} disabled={pending} style={{ alignSelf: 'flex-start' }}>
         {pending ? 'Čuvam…' : submit}
       </button>
     </form>

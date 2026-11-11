@@ -21,14 +21,29 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </div>
     );
   }
-  const [{ count: pendingRel }, { count: toPack }, { data: low }, { count: notArrived }] = await Promise.all([
+  const [{ count: pendingRel }, { count: toPack }, { data: low }, { count: notArrived }, { count: drawsN }, { count: svcN }, { count: dispN }, { count: repN }, { count: payN }, { count: supN }] = await Promise.all([
     supabase.from('releases').select('id', { count: 'exact', head: true }).eq('review_status', 'pending'),
     supabase.from('orders').select('id', { count: 'exact', head: true }).in('status', ['pending_payment', 'paid']),
     supabase.from('products').select('stock, low_stock_at, mode, is_visible'),
     supabase.from('stock_receipts').select('id', { count: 'exact', head: true }).is('received_at', null),
+    supabase.from('draws').select('id', { count: 'exact', head: true }).in('status', ['open', 'closed']),
+    supabase.from('service_requests').select('id', { count: 'exact', head: true }).eq('status', 'submitted'),
+    supabase.from('disputes').select('id', { count: 'exact', head: true }).eq('status', 'open'),
+    supabase.from('reports').select('id', { count: 'exact', head: true }).eq('status', 'open'),
+    supabase.from('payouts').select('id', { count: 'exact', head: true }).eq('status', 'ready'),
+    supabase.from('support_messages').select('id', { count: 'exact', head: true }).eq('status', 'open'),
   ]);
   const lowStock = (low ?? []).filter((p) => p.is_visible && p.mode === 'in_stock' && p.stock <= p.low_stock_at).length;
-  const counts = { proizvodi: lowStock + (notArrived ?? 0), porudzbine: toPack ?? 0, izdanja: pendingRel ?? 0 };
+  const counts = {
+    proizvodi: lowStock + (notArrived ?? 0),
+    porudzbine: toPack ?? 0,
+    izdanja: pendingRel ?? 0,
+    izvlacenja: drawsN ?? 0,
+    usluge: svcN ?? 0,
+    sporovi: (dispN ?? 0) + (repN ?? 0),
+    isplate: payN ?? 0,
+    podrska: supN ?? 0,
+  };
 
   return (
     <div className="adm">

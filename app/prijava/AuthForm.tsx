@@ -9,8 +9,8 @@ const ERR: Record<string, string> = {
   'User already registered': 'Nalog sa ovom e-poštom već postoji. Prijavi se.',
 };
 
-export default function AuthForm({ next }: { next: string }) {
-  const [mode, setMode] = useState<'login' | 'signup' | 'reset'>('login');
+export default function AuthForm({ next, initial = 'login' }: { next: string; initial?: 'login' | 'signup' }) {
+  const [mode, setMode] = useState<'login' | 'signup' | 'reset'>(initial);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const router = useRouter();
@@ -59,10 +59,10 @@ export default function AuthForm({ next }: { next: string }) {
     <div className="card stack">
       <div className="chips" role="tablist">
         <button type="button" role="tab" aria-selected={mode === 'login'} className={'chip' + (mode === 'login' ? ' on' : '')} onClick={() => setMode('login')}>
-          Prijava
+          Log in
         </button>
         <button type="button" role="tab" aria-selected={mode === 'signup'} className={'chip' + (mode === 'signup' ? ' on' : '')} onClick={() => setMode('signup')}>
-          Novi nalog
+          Sign up
         </button>
       </div>
       <form onSubmit={submit} className="stack">

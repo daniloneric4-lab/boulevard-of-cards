@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import Link from 'next/link';
 import Header from '@/components/Header';
 import { createClient } from '@/lib/supabase/server';
 
@@ -18,7 +19,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     .single();
 
   return (
-    <html lang="sr">
+    <html lang="sr-Latn">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
@@ -35,13 +36,22 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </div>
         ) : null}
         <Header />
-        <main>{children}</main>
+        <main className="main">{children}</main>
         <footer className="ftr">
           <div className="ftr-in">
-            <img src="/boc-b.png" alt="Boulevard of Cards" style={{ height: 24 }} />
-            <span>Boulevard of Cards · Topps kartice za Balkan</span>
+            <Link href="/" aria-label="Boulevard of Cards početna">
+              <img src="/boc-b.png" alt="Boulevard of Cards" style={{ height: 28 }} />
+            </Link>
+            <nav className="ftr-links" aria-label="Linkovi u podnožju">
+              <Link href="/katalog">Katalog</Link>
+              <Link href="/prodavac">Za prodavce</Link>
+              <Link href="/pomoc">Pomoć i pravila</Link>
+              <Link href="/recenzije">Recenzije</Link>
+              <Link href="/usluge">Usluge</Link>
+              <Link href="/prodaj">Prodaj karticu</Link>
+            </nav>
             <span className="mono" style={{ fontSize: 12 }}>
-              © {new Date().getFullYear()}
+              IPS · Kartica · Uplatnica · Pouzeće · © {new Date().getFullYear()}
             </span>
           </div>
         </footer>

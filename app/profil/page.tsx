@@ -3,23 +3,26 @@ import Link from 'next/link';
 import { getSessionInfo } from '@/lib/supabase/server';
 import { ORDER_STATUS, PAYMENT, date, money } from '@/lib/format';
 import { signOut } from '@/app/actions';
-import ProfileForm from './ProfileForm';
+import SubmitButton from '@/components/SubmitButton';
+import ActionForm from '@/components/ActionForm';
+import { confirmDelivery, openDispute } from '@/app/_act/market';
+import { DRAW_STATUS } from '@/lib/format';
 
-export const metadata: Metadata = { title: 'Profil' };
+export const metadata: Metadata = { title: 'Porudžbine i prijave' };
 export const dynamic = 'force-dynamic';
 
-export default async function Profile({ searchParams }: { searchParams: Promise<{ porudzbina?: string }> }) {
-  const { porudzbina } = await searchParams;
+export default async function Profile({ searchParams }: { searchParams: Promise<{ porudzbina?: string; kupljeno?: string }> }) {
+  const { porudzbina, kupljeno } = await searchParams;
   const { supabase, user, profile, isAdmin } = await getSessionInfo();
-  const [{ data: orders }, { data: settings }, { data: full }] = await Promise.all([
+  const [{ data: orders }, { data: entries }, { data: pre }] = await Promise.all([
     supabase
       .from('orders')
-      .select('id, status, amount_cents, shipping_cents, currency, payment_method, pay_deadline, tracking_number, created_at, order_items(title, quantity, unit_price_cents)')
+      .select('id, status, amount_cents, shipping_cents, currency, payment_method, pay_deadline, tracking_number, created_at, seller_id, order_items(title, quantity, unit_price_cents), listings(title)')
       .eq('buyer_id', user!.id)
       .order('created_at', { ascending: false })
       .limit(30),
-    supabase.from('user_settings').select('script, sports, notify_email, notify_push').eq('user_id', user!.id).maybeSingle(),
-    supabase.from('profiles').select('bio').eq('id', user!.id).single(),
+    supabase.from('draw_entries').select('id, status, waitlist_position, pay_deadline, created_at, draws(id, status, draw_at, releases(name))').eq('user_id', user!.id).order('created_at', { ascending: false }),
+    supabase.from('preorders').select('id, status, quantity, deposit_cents, created_at, releases(name, release_date)').eq('user_id', user!.id).order('created_at', { ascending: false }),
   ]);
 
   return (
@@ -45,6 +48,11 @@ export default async function Profile({ searchParams }: { searchParams: Promise<
         </div>
       </div>
 
+      {kupljeno ? (
+        <div className="alert alert-ok" role="status">
+          Kartica je rezervisana za tebe 24 sata. Uputstvo za uplatu stiže u obaveštenja, a novac čeka dok ne potvrdiš prijem.
+        </div>
+      ) : null}
       {porudzbina ? (
         <div className="alert alert-ok" role="status">
           Porudžbina je primljena. Uputstvo za uplatu stiže na e-poštu, a status pratiš ovde.
@@ -70,6 +78,7 @@ export default async function Profile({ searchParams }: { searchParams: Promise<
                   <tr key={o.id} style={o.id === porudzbina ? { background: '#f7fbf8' } : undefined}>
                     <td className="mono">{date(o.created_at, true)}</td>
                     <td>
+                      {!(o.order_items ?? []).length && o.listings ? <div>{(Array.isArray(o.listings) ? o.listings[0] : o.listings)?.title}</div> : null}
                       {(o.order_items ?? []).map((i, k) => (
                         <div key={k}>
                           {i.quantity} × {i.title}
@@ -92,6 +101,32 @@ export default async function Profile({ searchParams }: { searchParams: Promise<
                           Praćenje: {o.tracking_number}
                         </div>
                       ) : null}
+                      {o.status === 'shipped' || o.status === 'delivered' ? (
+                        <div className="stack" style={{ gap: 6, marginTop: 8 }}>
+                          <form action={confirmDelivery}>
+                            <input type="hidden" name="id" value={o.id} />
+                            <SubmitButton className="btn btn-sm btn-red">Potvrdi prijem</SubmitButton>
+                          </form>
+                          {o.seller_id ? (
+                            <details>
+                              <summary style={{ cursor: 'pointer', fontSize: 13 }}>Nešto nije u redu?</summary>
+                              <ActionForm action={openDispute} submit="Otvori spor" btn="btn btn-sm btn-dark" style={{ marginTop: 8, gap: 8 }}>
+                                <input type="hidden" name="order_id" value={o.id} />
+                                <select className="inp" name="reason" required defaultValue="">
+                                  <option value="" disabled>
+                                    Razlog
+                                  </option>
+                                  <option value="not_received">Nije stiglo</option>
+                                  <option value="not_as_described">Nije kao u oglasu</option>
+                                  <option value="damaged">Oštećeno</option>
+                                  <option value="other">Drugo</option>
+                                </select>
+                                <textarea className="inp" name="description" placeholder="Opiši šta se desilo" />
+                              </ActionForm>
+                            </details>
+                          ) : null}
+                        </div>
+                      ) : null}
                     </td>
                   </tr>
                 ))}
@@ -103,18 +138,59 @@ export default async function Profile({ searchParams }: { searchParams: Promise<
         )}
       </section>
 
-      <section className="stack" style={{ maxWidth: 640 }}>
-        <h2>Podešavanja</h2>
-        <ProfileForm
-          profile={{ display_name: profile?.display_name ?? '', city: profile?.city ?? '', bio: full?.bio ?? '' }}
-          settings={{
-            script: settings?.script ?? 'latin',
-            sports: settings?.sports ?? [],
-            notify_email: settings?.notify_email ?? true,
-            notify_push: settings?.notify_push ?? true,
-          }}
-        />
-      </section>
+      <div className="two">
+        <section className="stack">
+          <h2>Izvlačenja</h2>
+          {entries && entries.length ? (
+            <div className="list">
+              {entries.map((e) => {
+                const d = Array.isArray(e.draws) ? e.draws[0] : e.draws;
+                const r = d ? (Array.isArray(d.releases) ? d.releases[0] : d.releases) : null;
+                const lab: Record<string, string> = { entered: 'Prijavljen', won: 'Izvučen · plati', lost: 'Nije izvučen', waitlist: `Rezervna lista #${e.waitlist_position}`, paid: 'Plaćeno', forfeited: 'Isteklo' };
+                return (
+                  <Link key={e.id} href={`/izvlacenja/${d?.id}`} className="list-row" style={{ textDecoration: 'none' }}>
+                    <b style={{ flex: 1 }}>{r?.name}</b>
+                    <span className="muted" style={{ fontSize: 13 }}>{d ? DRAW_STATUS[d.status] : ''}</span>
+                    <span className={'pill ' + (e.status === 'won' ? 'pill-red' : e.status === 'paid' ? 'pill-green' : '')}>{lab[e.status]}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="alert alert-info">
+              Nisi prijavljen ni za jedno izvlačenje. <Link href="/izvlacenja" className="lnk">Pogledaj izvlačenja →</Link>
+            </div>
+          )}
+        </section>
+        <section className="stack">
+          <h2>Preorderi</h2>
+          {pre && pre.length ? (
+            <div className="list">
+              {pre.map((x) => {
+                const r = Array.isArray(x.releases) ? x.releases[0] : x.releases;
+                return (
+                  <div key={x.id} className="list-row">
+                    <b style={{ flex: 1 }}>{x.quantity} × {r?.name}</b>
+                    <span className="mono muted">{date(r?.release_date)}</span>
+                    <span className="pill">{x.status}</span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="alert alert-info">Nemaš preordera.</div>
+          )}
+        </section>
+      </div>
+
+      <div className="row">
+        <Link href="/podesavanja" className="btn btn-dark">
+          Podešavanja naloga
+        </Link>
+        <Link href="/kolekcija" className="btn btn-ghost">
+          Moja kolekcija
+        </Link>
+      </div>
     </div>
   );
 }
