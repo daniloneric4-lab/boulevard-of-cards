@@ -24,7 +24,8 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  if (!user && (path.startsWith('/admin') || path.startsWith('/profil') || path.startsWith('/korpa'))) {
+  const PRIVATE = ['/admin', '/profil', '/korpa', '/kolekcija', '/obavestenja', '/poruke', '/prodavac', '/podesavanja', '/pocetak', '/prodaj'];
+  if (!user && PRIVATE.some((p) => path === p || path.startsWith(p + '/'))) {
     const url = request.nextUrl.clone();
     url.pathname = '/prijava';
     url.searchParams.set('next', path);
