@@ -43,12 +43,27 @@ export async function removeCartItem(form: FormData) {
 
 export async function placeOrder(_: State, form: FormData): Promise<State> {
   const supabase = await createClient();
-  const shipping = String(form.get('shipping') || 'courier');
-  const payment = String(form.get('payment') || 'bank_transfer');
-  const { data, error } = await supabase.rpc('place_official_order', { p_shipping: shipping, p_payment: payment });
-  if (error) return { ok: false, msg: error.message };
+  const g = (k: string) => String(form.get(k) ?? '').trim();
+  const shipping = g('shipping') === 'pickup' ? 'pickup' : 'courier';
+  const payment = g('payment') || 'ips_qr';
+  const { data, error } = await supabase.rpc('place_official_order_v2', {
+    p_shipping: shipping,
+    p_payment: payment,
+    p_promo: g('promo'),
+    p_name: g('name'),
+    p_phone: g('phone'),
+    p_address: [g('address'), g('city')].filter(Boolean).join(', '),
+  });
+  if (error) return { ok: false, msg: error.message.replace(/^.*?ERROR:\s*/, '') };
   revalidatePath('/', 'layout');
-  redirect(`/profil?porudzbina=${data.id}`);
+  redirect(`/korpa/potvrda/${data.id}`);
+}
+
+export async function checkPromo(code: string): Promise<number | null> {
+  const supabase = await createClient();
+  if (!code.trim()) return null;
+  const { data } = await supabase.rpc('check_promo', { p_code: code });
+  return typeof data === 'number' ? data : null;
 }
 
 export async function updateProfile(_: State, form: FormData): Promise<State> {

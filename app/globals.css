@@ -276,3 +276,47 @@ a.lnk:hover { text-decoration: underline; }
   .msg { max-width: 90%; }
 }
 @media (prefers-reduced-motion: reduce) { .boc-shine { animation: none; } .tile:hover { transform: none; } }
+
+/* korpa */
+.steps-pills { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; }
+.steps-pills li { height: 36px; display: flex; align-items: center; padding: 0 14px; border-radius: 999px; font-size: 13px; font-weight: 600; border: 1px solid var(--bc-line); color: var(--bc-gray); }
+.steps-pills li.on { background: var(--bc-carbon); color: #fff; border-color: var(--bc-carbon); }
+.steps-pills li.done { background: var(--bc-surface); color: var(--bc-carbon); }
+.cart-row { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 16px; border-radius: 16px; background: var(--bc-surface); }
+.cart-thumb { width: 72px; height: 100px; border-radius: 8px; overflow: hidden; flex: none; background: var(--bc-carbon); }
+.cart-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.cart-thumb .slab-stage { height: 100%; }
+.cart-thumb .slab { transform: scale(.7); }
+.qty-btn { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--bc-line); background: #fff; font-size: 18px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.track { list-style: none; margin: 0; padding: 0 0 0 4px; display: flex; flex-direction: column; }
+.track li { position: relative; padding: 0 0 22px 32px; display: flex; flex-direction: column; gap: 2px; }
+.track li::before { content: ''; position: absolute; left: 0; top: 2px; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--bc-line); background: #fff; }
+.track li::after { content: ''; position: absolute; left: 9px; top: 22px; bottom: 0; width: 2px; background: var(--bc-line); }
+.track li:last-child::after { display: none; }
+.track li.done::before { background: var(--bc-red); border-color: var(--bc-red); box-shadow: inset 0 0 0 3px #fff; }
+
+/* preorder kalendar */
+.cal { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+.cal-item { display: flex; align-items: center; gap: 16px; padding: 14px 16px; border-radius: 16px; background: var(--bc-surface); text-decoration: none; color: inherit; transition: transform .3s ease, box-shadow .3s ease; }
+.cal-item:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(21,21,30,.1); }
+.cal-date { width: 58px; height: 64px; border-radius: 12px; background: var(--bc-carbon); color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: none; }
+.cal-date b { font: 700 24px var(--font-display); line-height: 1; }
+.cal-date small { font: 500 11px var(--font-mono); text-transform: uppercase; color: var(--bc-gray-dk); margin-top: 4px; }
+
+/* okretanje kartice */
+.flip-wrap .slab-stage { perspective: 1200px; }
+.flip { position: relative; width: 240px; height: 377px; transform-style: preserve-3d; transition: transform .6s cubic-bezier(.2,.7,.2,1); }
+.flip-wrap .slab-stage:hover .flip { transition: transform .12s linear; }
+.flip-face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 14px; padding: 9px; gap: 9px; }
+.flip-face .slab-top { height: 44px; font-size: 12px; padding: 0 10px; }
+.flip-back { transform: rotateY(180deg); }
+.flip-back-body { flex: 1; border-radius: 6px; background: var(--bc-carbon); color: #fff; padding: 16px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.flip-back-body dl { margin: 0; display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.flip-back-body dl div { display: flex; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--bc-line-dk); padding-bottom: 4px; }
+.flip-back-body dt { font: 500 10px var(--font-mono); color: var(--bc-gray-dk); text-transform: uppercase; }
+.flip-back-body dd { margin: 0; font: 600 12px var(--font-mono); }
+.flip-glare { position: absolute; inset: 0; mix-blend-mode: soft-light; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .flip { transition: none; } }
+.demo-tag { position: absolute; bottom: 12px; left: 12px; font: 600 10px var(--font-mono); letter-spacing: .08em; padding: 4px 7px; border-radius: 5px; background: #fff; color: var(--bc-carbon); }
+.filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; padding: 16px; border-radius: 16px; background: var(--bc-surface); }
+.filters .fld { flex: 1 1 150px; font-size: 13px; }

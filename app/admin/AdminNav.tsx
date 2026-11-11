@@ -15,6 +15,7 @@ const ITEMS: [string, string, keyof Counts | null][] = [
   ['/admin/korisnici', 'Korisnici', null],
   ['/admin/katalog', 'Katalog', null],
   ['/admin/podrska', 'Poruke podrške', 'podrska'],
+  ['/admin/kodovi', 'Kodovi za popust', null],
   ['/admin/podesavanja', 'Podešavanja', null],
   ['/admin/dnevnik', 'Dnevnik', null],
 ];

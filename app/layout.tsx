@@ -42,14 +42,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <Link href="/" aria-label="Boulevard of Cards početna">
               <img src="/boc-b.png" alt="Boulevard of Cards" style={{ height: 28 }} />
             </Link>
-            <nav className="ftr-links" aria-label="Linkovi u podnožju">
-              <Link href="/katalog">Katalog</Link>
-              <Link href="/prodavac">Za prodavce</Link>
-              <Link href="/pomoc">Pomoć i pravila</Link>
-              <Link href="/recenzije">Recenzije</Link>
-              <Link href="/usluge">Usluge</Link>
-              <Link href="/prodaj">Prodaj karticu</Link>
-            </nav>
             <span className="mono" style={{ fontSize: 12 }}>
               IPS · Kartica · Uplatnica · Pouzeće · © {new Date().getFullYear()}
             </span>

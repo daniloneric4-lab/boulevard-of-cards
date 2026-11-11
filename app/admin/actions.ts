@@ -302,3 +302,23 @@ export async function setSupportStatus(form: FormData) {
   await supabase.from('support_messages').update({ status: String(form.get('status')) }).eq('id', String(form.get('id')));
   revalidatePath('/admin', 'layout');
 }
+
+/* ===== kodovi za popust ===== */
+export async function savePromo(_: State, form: FormData): Promise<State> {
+  const supabase = await createClient();
+  const code = String(form.get('code') || '').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+  const percent = int(form.get('percent'), 0);
+  if (code.length < 3) return fail('Kod mora imati bar 3 znaka (slova i brojevi).');
+  if (percent < 1 || percent > 90) return fail('Popust mora biti od 1 do 90%.');
+  const exp = String(form.get('expires_at') || '');
+  const max = String(form.get('max_uses') || '');
+  const { error } = await supabase.from('promo_codes').upsert({ code, percent, active: true, expires_at: exp ? new Date(exp).toISOString() : null, max_uses: max ? int(max) : null });
+  if (error) return fail(error.message);
+  revalidatePath('/admin/kodovi');
+  return ok(`Kod ${code} (${percent}%) je aktivan.`);
+}
+export async function togglePromo(form: FormData) {
+  const supabase = await createClient();
+  await supabase.from('promo_codes').update({ active: form.get('active') === '1' }).eq('code', String(form.get('code')));
+  revalidatePath('/admin/kodovi');
+}

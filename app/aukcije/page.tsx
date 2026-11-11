@@ -4,6 +4,7 @@ import { getSessionInfo } from '@/lib/supabase/server';
 import PageHero from '@/components/PageHero';
 import ListingTile from '@/components/ListingTile';
 import Empty from '@/components/Empty';
+import DemoTiles from '@/components/DemoTiles';
 import { SPORTS } from '@/lib/format';
 import { LISTING_SELECT, one, type ListingRow } from '@/lib/listings';
 
@@ -87,6 +88,8 @@ export default async function Auctions({ searchParams }: { searchParams: Promise
               <ListingTile key={l.id} l={l} />
             ))}
           </div>
+        ) : view === 'all' ? (
+          <DemoTiles sport={sport} mode="Aukcija" cta="Postavi aukciju" href="/prodaj?mode=auction" />
         ) : (
           <Empty
             title={view === 'watch' ? 'Ne pratiš nijednu aukciju' : view === 'mine' ? 'Nemaš aktivnih ponuda' : 'Trenutno nema aktivnih aukcija'}

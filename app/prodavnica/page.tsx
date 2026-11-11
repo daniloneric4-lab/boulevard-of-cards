@@ -5,26 +5,46 @@ import ProductCard, { type Product } from '@/components/ProductCard';
 import RotatingVideo from '@/components/RotatingVideo';
 import { SPORTS } from '@/lib/format';
 import ListingTile from '@/components/ListingTile';
+import DemoTiles from '@/components/DemoTiles';
 import { LISTING_SELECT, type ListingRow } from '@/lib/listings';
 
 export const metadata: Metadata = { title: 'Prodavnica' };
 export const dynamic = 'force-dynamic';
 
-export default async function Shop({ searchParams }: { searchParams: Promise<{ sport?: string; q?: string }> }) {
-  const { sport, q } = await searchParams;
+type SP = { sport?: string; q?: string; nacin?: string; od?: string; do?: string; ocena?: string; sort?: string };
+
+export default async function Shop({ searchParams }: { searchParams: Promise<SP> }) {
+  const sp = await searchParams;
+  const { sport, q, nacin, ocena, sort = 'new' } = sp;
+  const od = sp.od ? Math.round(Number(sp.od) * 100) : null;
+  const dO = sp.do ? Math.round(Number(sp.do) * 100) : null;
   const supabase = await createClient();
   let query = supabase
     .from('products')
     .select('id, name, kind, sport, mode, price_cents, currency, stock, low_stock_at, image_path, description')
     .eq('is_visible', true)
-    .order('mode', { ascending: true })
-    .order('created_at', { ascending: false });
+    .order('mode', { ascending: true });
+  query = sort === 'price_asc' ? query.order('price_cents', { ascending: true }) : sort === 'price_desc' ? query.order('price_cents', { ascending: false }) : query.order('created_at', { ascending: false });
+  if (od) query = query.gte('price_cents', od);
+  if (dO) query = query.lte('price_cents', dO);
   if (sport && SPORTS.some((s) => s.key === sport)) query = query.eq('sport', sport);
   if (q) query = query.ilike('name', `%${q.replace(/[%_]/g, '')}%`);
-  let lq = supabase.from('listings').select(LISTING_SELECT).eq('status', 'active').neq('mode', 'showcase').order('created_at', { ascending: false }).limit(24);
+  let lq = supabase.from('listings').select(LISTING_SELECT).eq('status', 'active').neq('mode', 'showcase').limit(60);
+  lq = sort === 'price_asc' ? lq.order('price_cents', { ascending: true, nullsFirst: false }) : sort === 'price_desc' ? lq.order('price_cents', { ascending: false, nullsFirst: false }) : lq.order('created_at', { ascending: false });
+  if (nacin && ['fixed', 'auction', 'offers', 'trade'].includes(nacin)) lq = lq.eq('mode', nacin);
+  if (od) lq = lq.gte('price_cents', od);
+  if (dO) lq = lq.lte('price_cents', dO);
   if (sport && SPORTS.some((s) => s.key === sport)) lq = lq.eq('sport', sport);
   if (q) lq = lq.ilike('title', `%${q.replace(/[%_]/g, '')}%`);
-  const [{ data: products, error }, { data: listings }] = await Promise.all([query, lq]);
+  const [{ data: products, error }, { data: rawListings }] = await Promise.all([query, lq]);
+  const listings = ((rawListings ?? []) as unknown as ListingRow[]).filter((l) => {
+    const ci = Array.isArray(l.collection_items) ? l.collection_items[0] : l.collection_items;
+    if (ocena === 'raw') return !ci?.grader || ci.grader === 'raw';
+    if (ocena === 'graded') return !!ci?.grader && ci.grader !== 'raw';
+    if (ocena === '10') return Number(ci?.grade) === 10;
+    return true;
+  });
+  const filtered = !!(nacin || od || dO || ocena || sort !== 'new');
 
   const hero = HERO[sport ?? ''] ?? HERO[''];
 
@@ -62,6 +82,52 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ s
         ))}
       </div>
 
+      <form action="/prodavnica" className="filters" aria-label="Filteri">
+        {sport ? <input type="hidden" name="sport" value={sport} /> : null}
+        {q ? <input type="hidden" name="q" value={q} /> : null}
+        <label className="fld">
+          Način prodaje
+          <select className="inp" name="nacin" defaultValue={nacin ?? ''}>
+            <option value="">Sve</option>
+            <option value="fixed">Kupi odmah</option>
+            <option value="auction">Aukcija</option>
+            <option value="offers">Primam ponude</option>
+            <option value="trade">Za razmenu</option>
+          </select>
+        </label>
+        <label className="fld">
+          Ocena
+          <select className="inp" name="ocena" defaultValue={ocena ?? ''}>
+            <option value="">Sve</option>
+            <option value="graded">Samo gradirane</option>
+            <option value="10">Ocena 10</option>
+            <option value="raw">Bez ocene (RAW)</option>
+          </select>
+        </label>
+        <label className="fld">
+          Cena od (RSD)
+          <input className="inp" name="od" inputMode="numeric" defaultValue={sp.od ?? ''} placeholder="0" />
+        </label>
+        <label className="fld">
+          do (RSD)
+          <input className="inp" name="do" inputMode="numeric" defaultValue={sp.do ?? ''} placeholder="bez limita" />
+        </label>
+        <label className="fld">
+          Sortiraj
+          <select className="inp" name="sort" defaultValue={sort}>
+            <option value="new">Najnovije</option>
+            <option value="price_asc">Cena: od najniže</option>
+            <option value="price_desc">Cena: od najviše</option>
+          </select>
+        </label>
+        <button className="btn btn-dark">Primeni</button>
+        {filtered ? (
+          <Link href={`/prodavnica${sport ? '?sport=' + sport : ''}`} className="btn btn-ghost">
+            Poništi
+          </Link>
+        ) : null}
+      </form>
+
       {error ? <div className="alert alert-err">Prodavnica trenutno ne može da se učita.</div> : null}
       <h2>Zvanična ponuda</h2>
       {products && products.length ? (
@@ -80,14 +146,14 @@ export default async function Shop({ searchParams }: { searchParams: Promise<{ s
           Aukcije
         </Link>
       </div>
-      {listings && listings.length ? (
+      {listings.length ? (
         <div className="grid-tiles">
-          {(listings as unknown as ListingRow[]).map((l) => (
+          {listings.map((l) => (
             <ListingTile key={l.id} l={l} />
           ))}
         </div>
       ) : (
-        <div className="alert alert-info">Još nema oglasa kolekcionara za ovaj izbor.</div>
+        filtered ? <div className="alert alert-info">Nema oglasa za ove filtere.</div> : <DemoTiles sport={sport} />
       )}
 
       <div className="two" style={{ marginTop: 8 }}>

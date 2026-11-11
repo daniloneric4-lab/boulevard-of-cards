@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getSessionInfo } from '@/lib/supabase/server';
-import CardArt from '@/components/CardArt';
+import FlipCard from '@/components/FlipCard';
 import ListingTile from '@/components/ListingTile';
 import WishForm from '@/components/WishForm';
 import SubmitButton from '@/components/SubmitButton';
@@ -31,7 +31,18 @@ export default async function CatalogCard({ params }: { params: Promise<{ id: st
         ← Katalog
       </Link>
       <div className="two">
-        <CardArt seed={c.id} grade={c.is_autograph ? 'AUTO' : c.is_rookie ? 'RC' : 'BASE'} size="lg" image={c.image_url} label={title} />
+        <FlipCard
+          seed={c.id}
+          grade={c.is_autograph ? 'AUTO' : c.is_rookie ? 'RC' : 'BASE'}
+          image={c.image_url}
+          title={title}
+          back={[
+            { label: 'Set', value: `${c.year} ${c.set_name}` },
+            { label: 'Broj', value: c.card_number ? '#' + c.card_number : '—' },
+            { label: 'Tim', value: c.team || '—' },
+            { label: 'Tiraž', value: c.print_run ? '/' + c.print_run : '—' },
+          ]}
+        />
         <div className="stack" style={{ gap: 18 }}>
           <span className="kicker">
             {sportLabel(c.sport)} · {c.year} {c.set_name}

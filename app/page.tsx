@@ -261,31 +261,38 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
       </section>
 
       <section className="wrap section stack">
-        <h2>Sledeća izdanja</h2>
+        <div className="row between">
+          <div className="stack" style={{ gap: 4 }}>
+            <span className="kicker">Preorder kalendar</span>
+            <h2>Sledeća izdanja</h2>
+          </div>
+          <Link href="/izvlacenja" className="btn btn-ghost btn-sm">
+            Izvlačenja
+          </Link>
+        </div>
         {releases && releases.length ? (
-          <div className="tbl-wrap">
-            <table className="tbl">
-              <thead>
-                <tr>
-                  <th>Izdanje</th>
-                  <th>Sport</th>
-                  <th>Format</th>
-                  <th>Izlazi</th>
-                  <th>Cena u SAD</th>
-                </tr>
-              </thead>
-              <tbody>
-                {releases.map((r) => (
-                  <tr key={r.id}>
-                    <td style={{ fontWeight: 600 }}>{r.name}</td>
-                    <td>{sportLabel(r.sport)}</td>
-                    <td>{r.box_format}</td>
-                    <td className="mono">{date(r.release_date)}</td>
-                    <td className="mono">{r.us_price_cents ? money(r.us_price_cents, 'USD') : '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="cal">
+            {releases.map((r) => {
+              const d = r.release_date ? new Date(r.release_date + 'T12:00:00') : null;
+              const cta = r.sale_type === 'draw' ? ['Izvlačenje', '/izvlacenja'] : r.sale_type === 'preorder' ? ['Preorder', `/prodavnica?q=${encodeURIComponent(r.name)}`] : r.sale_type === 'order' ? ['Poruči', `/prodavnica?q=${encodeURIComponent(r.name)}`] : ['Javi mi', '/podesavanja#obavestenja'];
+              return (
+                <Link key={r.id} href={cta[1]} className="cal-item">
+                  <span className="cal-date">
+                    <b>{d ? d.getDate() : '—'}</b>
+                    <small>{d ? d.toLocaleDateString('sr-Latn-RS', { month: 'short' }).replace('.', '') : ''}</small>
+                  </span>
+                  <span className="stack" style={{ gap: 4, flex: 1, minWidth: 0 }}>
+                    <span className="mono muted" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                      {sportLabel(r.sport)}
+                      {r.box_format ? ` · ${r.box_format}` : ''}
+                    </span>
+                    <b style={{ fontSize: 15, lineHeight: 1.3 }}>{r.name}</b>
+                    {r.us_price_cents ? <span className="mono muted" style={{ fontSize: 12 }}>U SAD {money(r.us_price_cents, 'USD')}</span> : null}
+                  </span>
+                  <span className={'btn btn-sm ' + (r.sale_type === 'draw' ? 'btn-red' : 'btn-dark')}>{cta[0]}</span>
+                </Link>
+              );
+            })}
           </div>
         ) : (
           <div className="alert alert-info">Kalendar izdanja se popunjava čim admin odobri nova izdanja.</div>

@@ -17,7 +17,7 @@ export default async function AdminOrders({ searchParams }: { searchParams: Prom
   const supabase = await createClient();
   let q = supabase
     .from('orders')
-    .select('id, status, is_official, amount_cents, shipping_cents, currency, shipping, payment_method, tracking_number, pay_deadline, created_at, buyer:profiles!orders_buyer_id_fkey(username, display_name, city), order_items(title, quantity, unit_price_cents)')
+    .select('id, status, is_official, amount_cents, shipping_cents, currency, shipping, payment_method, tracking_number, pay_deadline, created_at, discount_cents, promo_code, ship_name, ship_phone, ship_address, buyer:profiles!orders_buyer_id_fkey(username, display_name, city), order_items(title, quantity, unit_price_cents)')
     .order('created_at', { ascending: false })
     .limit(100);
   if (f === 'aktivne') q = q.in('status', ['pending_payment', 'paid', 'shipped']);
@@ -49,6 +49,12 @@ export default async function AdminOrders({ searchParams }: { searchParams: Prom
                     <span className="mono muted" style={{ fontSize: 12 }}>
                       {date(o.created_at, true)} · #{o.id.slice(0, 8)} · {o.is_official ? 'Zvanična prodavnica' : 'Tržište'}
                     </span>
+                    {o.ship_name ? (
+                      <span style={{ fontSize: 13 }}>
+                        Dostava: <b>{o.ship_name}</b> · {o.ship_phone}
+                        {o.ship_address ? ` · ${o.ship_address}` : ''}
+                      </span>
+                    ) : null}
                     {(o.order_items ?? []).map((i, k) => (
                       <span key={k} style={{ fontSize: 14 }}>
                         {i.quantity} × {i.title} <span className="mono muted">({money(i.unit_price_cents)})</span>
@@ -56,7 +62,8 @@ export default async function AdminOrders({ searchParams }: { searchParams: Prom
                     ))}
                   </div>
                   <div className="stack" style={{ gap: 4, alignItems: 'flex-end' }}>
-                    <span className="price">{money(o.amount_cents + o.shipping_cents, o.currency)}</span>
+                    <span className="price">{money(o.amount_cents + o.shipping_cents - (o.discount_cents ?? 0), o.currency)}</span>
+                    {o.discount_cents ? <span className="mono muted" style={{ fontSize: 12 }}>popust {o.promo_code} −{money(o.discount_cents)}</span> : null}
                     <span className="muted" style={{ fontSize: 13 }}>
                       {o.payment_method ? PAYMENT[o.payment_method] : '—'} · {o.shipping === 'pickup' ? 'Lično preuzimanje' : 'Kurir'}
                     </span>
