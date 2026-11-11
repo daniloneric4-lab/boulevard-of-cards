@@ -7,14 +7,15 @@ import SubmitButton from '@/components/SubmitButton';
 import ActionForm from '@/components/ActionForm';
 import { confirmDelivery, openDispute } from '@/app/_act/market';
 import { DRAW_STATUS } from '@/lib/format';
+import { getMyStatus } from '@/lib/status';
 
-export const metadata: Metadata = { title: 'Porudžbine i prijave' };
+export const metadata: Metadata = { title: 'Moj status' };
 export const dynamic = 'force-dynamic';
 
 export default async function Profile({ searchParams }: { searchParams: Promise<{ porudzbina?: string; kupljeno?: string }> }) {
   const { porudzbina, kupljeno } = await searchParams;
   const { supabase, user, profile, isAdmin } = await getSessionInfo();
-  const [{ data: orders }, { data: entries }, { data: pre }] = await Promise.all([
+  const [{ data: orders }, { data: entries }, { data: pre }, status] = await Promise.all([
     supabase
       .from('orders')
       .select('id, status, amount_cents, shipping_cents, currency, payment_method, pay_deadline, tracking_number, created_at, seller_id, order_items(title, quantity, unit_price_cents), listings(title)')
@@ -23,6 +24,7 @@ export default async function Profile({ searchParams }: { searchParams: Promise<
       .limit(30),
     supabase.from('draw_entries').select('id, status, waitlist_position, pay_deadline, created_at, draws(id, status, draw_at, releases(name))').eq('user_id', user!.id).order('created_at', { ascending: false }),
     supabase.from('preorders').select('id, status, quantity, deposit_cents, created_at, releases(name, release_date)').eq('user_id', user!.id).order('created_at', { ascending: false }),
+    getMyStatus(supabase, user!.id),
   ]);
 
   return (
@@ -59,7 +61,20 @@ export default async function Profile({ searchParams }: { searchParams: Promise<
         </div>
       ) : null}
 
-      <section className="stack">
+      <section className="stack" id="status">
+        <h2>Moj status</h2>
+        <div className="kv">
+          {status.map((m) => (
+            <Link key={m.t} href={m.href} className="stat-tile">
+              <span className="mono muted stat-t">{m.t}</span>
+              <b>{m.v}</b>
+              <span className="muted" style={{ fontSize: 13, color: m.hot ? 'var(--bc-red-dk)' : undefined }}>{m.sub}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="stack" id="porudzbine">
         <h2>Moje porudžbine</h2>
         {orders && orders.length ? (
           <div className="tbl-wrap">
@@ -139,7 +154,7 @@ export default async function Profile({ searchParams }: { searchParams: Promise<
       </section>
 
       <div className="two">
-        <section className="stack">
+        <section className="stack" id="prijave">
           <h2>Izvlačenja</h2>
           {entries && entries.length ? (
             <div className="list">

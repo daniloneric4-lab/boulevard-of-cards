@@ -12,6 +12,7 @@ import { LISTING_MODE, date, gradeLabel, listingImage, money, sportLabel } from 
 import { LISTING_SELECT, one, type ListingRow } from '@/lib/listings';
 import BidForm from './BidForm';
 import BuyForm from './BuyForm';
+import ViewPing from '@/components/ViewPing';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,6 +62,7 @@ export default async function ListingPage({ params, searchParams }: { params: Pr
 
   return (
     <div className="page">
+      <ViewPing kind="listing" id={l.id} />
       {novo ? (
         <div className="alert alert-ok" role="status">
           Oglas je objavljen i vidi se u prodavnici. Kartica je dodata u tvoju kolekciju.

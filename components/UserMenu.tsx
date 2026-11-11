@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { signOut } from '@/app/actions';
 import { avatarUrl, initials } from '@/lib/format';
+import type { StatusItem } from '@/lib/status';
 
 export default function UserMenu({
   username,
@@ -11,12 +12,14 @@ export default function UserMenu({
   avatar,
   isAdmin,
   unreadMsgs,
+  status,
 }: {
   username: string;
   name: string;
   avatar: string | null;
   isAdmin: boolean;
   unreadMsgs: number;
+  status: StatusItem[];
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -39,7 +42,7 @@ export default function UserMenu({
   const items: [string, string, number?][] = [
     [`/u/${username}`, 'Moj profil'],
     ['/kolekcija', 'Moja kolekcija'],
-    ['/profil', 'Porudžbine i prijave'],
+    ['/profil', 'Porudžbine, prijave, preorderi'],
     ['/poruke', 'Poruke', unreadMsgs],
     ['/prodavac', 'Panel prodavca'],
     ['/prodaj', 'Prodaj karticu'],
@@ -58,6 +61,22 @@ export default function UserMenu({
           <div className="umenu-head">
             <b>{name || username}</b>
             <span className="mono muted">@{username}</span>
+          </div>
+          <div className="umenu-status">
+            <span className="umenu-st-h">
+              Moj status
+              <Link href="/profil#status" className="lnk" style={{ fontSize: 12 }}>
+                Sve →
+              </Link>
+            </span>
+            <div className="umenu-st-grid">
+              {status.map((m) => (
+                <Link key={m.t} href={m.href} className={'umenu-st' + (m.hot ? ' hot' : '')}>
+                  <b>{m.v}</b>
+                  <span>{m.t}</span>
+                </Link>
+              ))}
+            </div>
           </div>
           {items.map(([href, label, n]) => (
             <Link key={href} href={href} role="menuitem">

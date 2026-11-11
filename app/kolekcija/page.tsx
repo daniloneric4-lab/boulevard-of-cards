@@ -4,6 +4,7 @@ import { requireUser } from '@/lib/auth';
 import Avatar from '@/components/Avatar';
 import CardArt from '@/components/CardArt';
 import ActionForm from '@/components/ActionForm';
+import AutoFixInput from '@/components/AutoFixInput';
 import SubmitButton from '@/components/SubmitButton';
 import WishForm from '@/components/WishForm';
 import { addCollectionItem, deleteCollectionItem, removeWish, updateCollectionItem } from '@/app/_act/market';
@@ -166,7 +167,7 @@ export default async function Collection({ searchParams }: { searchParams: Promi
             <ActionForm action={addCollectionItem} submit="Dodaj">
               <label className="fld">
                 Kartica
-                <input className="inp" name="title" required placeholder="2026 Topps Chrome F1 · Refractor" />
+                <AutoFixInput className="inp" name="title" required placeholder="2026 Topps Chrome F1 · Refractor" />
               </label>
               <div className="row" style={{ gap: 8, flexWrap: 'nowrap' }}>
                 <label className="fld" style={{ flex: 1 }}>

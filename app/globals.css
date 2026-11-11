@@ -174,12 +174,25 @@ a.lnk:hover { text-decoration: underline; }
 .umenu { position: relative; }
 .umenu-btn { position: relative; background: none; border: 0; padding: 2px; border-radius: 50%; cursor: pointer; display: flex; min-width: 44px; min-height: 44px; align-items: center; justify-content: center; }
 .umenu-btn:focus-visible { outline: 2px solid var(--bc-red); outline-offset: 2px; }
-.umenu-pop { position: absolute; right: 0; top: calc(100% + 8px); width: 250px; background: #fff; color: var(--bc-carbon); border-radius: 14px; box-shadow: 0 20px 50px rgba(0,0,0,.25); padding: 6px; z-index: 40; display: flex; flex-direction: column; }
+.umenu-pop { position: absolute; right: 0; top: calc(100% + 8px); width: 300px; max-height: calc(100vh - 90px); overflow-y: auto; background: #fff; color: var(--bc-carbon); border-radius: 14px; box-shadow: 0 20px 50px rgba(0,0,0,.25); padding: 6px; z-index: 40; display: flex; flex-direction: column; }
 .umenu-head { display: flex; flex-direction: column; padding: 10px 12px 12px; border-bottom: 1px solid var(--bc-line); margin-bottom: 4px; font-size: 14px; }
 .umenu-head .mono { font-size: 12px; }
 .umenu-pop a, .umenu-out { display: flex; align-items: center; justify-content: space-between; min-height: 42px; padding: 0 12px; border-radius: 10px; text-decoration: none; font-size: 14px; font-weight: 500; }
 .umenu-pop a:hover, .umenu-out:hover { background: var(--bc-surface); }
 .umenu-pop form { border-top: 1px solid var(--bc-line); margin-top: 4px; padding-top: 4px; }
+.umenu-status { padding: 6px 6px 10px; border-bottom: 1px solid var(--bc-line); margin-bottom: 4px; display: flex; flex-direction: column; gap: 8px; }
+.umenu-st-h { display: flex; justify-content: space-between; align-items: center; font: 600 11px var(--font-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--bc-gray-dk); padding: 0 6px; }
+.umenu-pop .umenu-st-h a { min-height: 0; padding: 0; }
+.umenu-st-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.umenu-pop a.umenu-st { flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; min-height: 64px; padding: 8px 10px; background: var(--bc-surface); border-radius: 10px; }
+.umenu-pop a.umenu-st:hover { background: var(--bc-line); }
+.umenu-st b { font: 600 22px var(--font-display); line-height: 1; }
+.umenu-st span { font-size: 11px; color: var(--bc-gray-dk); font-weight: 500; }
+.umenu-st.hot { box-shadow: inset 0 0 0 2px var(--bc-red); }
+.stat-tile { text-decoration: none; background: var(--bc-surface); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 4px; color: inherit; }
+.stat-tile:hover { background: var(--bc-line); }
+.stat-t { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+.stat-tile b { font-family: var(--font-display); font-size: 26px; }
 .umenu-out { width: 100%; background: none; border: 0; cursor: pointer; font: 500 14px var(--font-body); color: var(--bc-carbon); }
 .ftr-links { display: flex; flex-wrap: wrap; gap: 4px 18px; }
 .ftr-links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--bc-line); }
@@ -191,6 +204,10 @@ a.lnk:hover { text-decoration: underline; }
 .phero-lead { font-size: 15px; color: var(--bc-line); max-width: 600px; }
 .phero-badge { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; font: 500 12px var(--font-mono); padding: 6px 10px; border-radius: 6px; background: var(--bc-red); color: #fff; }
 .phero .btn-ghost { color: #fff; border-color: var(--bc-line-dk); }
+.phero-video > video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.phero-shade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(21,21,30,.92) 0%, rgba(21,21,30,.6) 60%, rgba(21,21,30,.4) 100%); }
+.phero-video .phero-in { padding-top: 88px; padding-bottom: 64px; }
+@media (max-width: 720px) { .phero-video .phero-in { padding-top: 56px; padding-bottom: 44px; } }
 .page { max-width: 1360px; margin: 0 auto; padding: 28px 24px 24px; display: flex; flex-direction: column; gap: 28px; }
 
 .slab-stage { display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse 70% 60% at 50% 38%, rgba(255,255,255,.14) 0%, rgba(255,255,255,0) 60%), var(--bc-carbon); }

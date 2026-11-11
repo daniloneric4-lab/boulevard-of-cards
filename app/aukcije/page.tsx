@@ -39,6 +39,7 @@ export default async function Auctions({ searchParams }: { searchParams: Promise
     <>
       <PageHero
         title="Aukcije"
+        video={sport && ['football', 'f1', 'nba', 'nfl'].includes(sport) ? sport : 'mix'}
         badge={
           <>
             <span className="live-dot" style={{ background: '#fff' }} /> {list.length} AUKCIJA UŽIVO

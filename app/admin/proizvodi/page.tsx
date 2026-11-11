@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { KIND, PRODUCT_MODE, SPORTS, date, money, productImage, sportLabel } from '@/lib/format';
 import ActionForm from '@/components/ActionForm';
+import AutoFixInput from '@/components/AutoFixInput';
 import { addReceipt, adjustStock, receiveStock, saveProduct } from '../actions';
 
 type P = {
@@ -25,7 +26,7 @@ function ProductFields({ p }: { p?: P }) {
       {p ? <input type="hidden" name="id" value={p.id} /> : null}
       <label className="fld">
         Naziv
-        <input className="inp" name="name" required defaultValue={p?.name} placeholder="npr. 2025-26 Topps Chrome UCL Hobby" />
+        <AutoFixInput className="inp" name="name" required defaultValue={p?.name} placeholder="npr. 2025-26 Topps Chrome UCL Hobby" />
       </label>
       <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12 }}>
         <label className="fld">

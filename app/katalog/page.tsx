@@ -6,12 +6,18 @@ import CardArt from '@/components/CardArt';
 import Empty from '@/components/Empty';
 import WishForm from '@/components/WishForm';
 import { SPORTS, sportLabel } from '@/lib/format';
+import { correctQuery } from '@/lib/spell';
 
 export const metadata: Metadata = { title: 'Katalog i vrednost kartica' };
 export const dynamic = 'force-dynamic';
 
-export default async function Catalog({ searchParams }: { searchParams: Promise<{ q?: string; sport?: string }> }) {
-  const { q, sport } = await searchParams;
+export default async function Catalog({ searchParams }: { searchParams: Promise<{ q?: string; sport?: string; tacno?: string }> }) {
+  const sp = await searchParams;
+  const { sport } = sp;
+  const typed = sp.q?.trim() || '';
+  const fix = correctQuery(typed);
+  const q = sp.tacno ? typed : fix.q;
+  const corrected = !sp.tacno && fix.changed;
   const supabase = await createClient();
   let query = supabase.from('card_catalog').select('id, sport, year, set_name, card_number, player, team, parallel, print_run, is_rookie, is_autograph').order('created_at', { ascending: false }).limit(120);
   if (sport && SPORTS.some((s) => s.key === sport)) query = query.eq('sport', sport);
@@ -32,7 +38,7 @@ export default async function Catalog({ searchParams }: { searchParams: Promise<
           <label className="sr-only" htmlFor="kq">
             Pretraga kataloga
           </label>
-          <input id="kq" className="inp" name="q" defaultValue={q ?? ''} placeholder="Igrač, set, paralela…" />
+          <input id="kq" className="inp" name="q" defaultValue={q} placeholder="Igrač, set, paralela…" />
           <button className="btn btn-red">Traži</button>
         </form>
       </PageHero>
@@ -50,6 +56,14 @@ export default async function Catalog({ searchParams }: { searchParams: Promise<
         <span className="mono muted" style={{ fontSize: 13 }}>
           {(cards ?? []).length} kartica
         </span>
+        {corrected ? (
+          <p className="muted" style={{ fontSize: 14 }} role="status">
+            Prikazujem rezultate za <b style={{ color: 'var(--bc-carbon)' }}>{q}</b>.{' '}
+            <Link className="lnk" href={`/katalog?q=${encodeURIComponent(typed)}&tacno=1${sport ? '&sport=' + sport : ''}`}>
+              Traži tačno „{typed}”
+            </Link>
+          </p>
+        ) : null}
         {cards && cards.length ? (
           <div className="grid-tiles">
             {cards.map((c) => (

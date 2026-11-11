@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import ActionForm from '@/components/ActionForm';
+import AutoFixInput from '@/components/AutoFixInput';
 import SubmitButton from '@/components/SubmitButton';
 import { deleteCatalog, saveCatalog } from '../actions';
 import { SPORTS, sportLabel } from '@/lib/format';
@@ -35,7 +36,7 @@ export default async function AdminCatalog() {
             </label>
             <label className="fld" style={{ flex: 1 }}>
               Set
-              <input className="inp" name="set_name" required placeholder="Topps Chrome F1" />
+              <AutoFixInput className="inp" name="set_name" required placeholder="Topps Chrome F1" />
             </label>
             <label className="fld">
               Broj
@@ -45,7 +46,7 @@ export default async function AdminCatalog() {
           <div className="row">
             <label className="fld" style={{ flex: 1 }}>
               Igrač / vozač
-              <input className="inp" name="player" required />
+              <AutoFixInput className="inp" name="player" required />
             </label>
             <label className="fld" style={{ flex: 1 }}>
               Tim
@@ -53,7 +54,7 @@ export default async function AdminCatalog() {
             </label>
             <label className="fld">
               Paralela
-              <input className="inp" name="parallel" placeholder="Refractor" />
+              <AutoFixInput className="inp" name="parallel" placeholder="Refractor" />
             </label>
             <label className="fld">
               Tiraž (/n)

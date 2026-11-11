@@ -22,6 +22,7 @@ export async function addToCart(_: State, form: FormData): Promise<State> {
     ? await supabase.from('cart_items').update({ quantity: existing.quantity + 1 }).eq('id', existing.id)
     : await supabase.from('cart_items').insert({ user_id: user.id, product_id: productId, quantity: 1 });
   if (error) return { ok: false, msg: 'Nije uspelo dodavanje u korpu.' };
+  await supabase.rpc('bump_view', { p_kind: 'product', p_id: productId });
   revalidatePath('/', 'layout');
   return { ok: true, msg: 'Dodato u korpu.' };
 }

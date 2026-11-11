@@ -7,15 +7,20 @@ import { SPORTS } from '@/lib/format';
 import ListingTile from '@/components/ListingTile';
 import DemoTiles from '@/components/DemoTiles';
 import { LISTING_SELECT, type ListingRow } from '@/lib/listings';
+import { correctQuery } from '@/lib/spell';
 
 export const metadata: Metadata = { title: 'Prodavnica' };
 export const dynamic = 'force-dynamic';
 
-type SP = { sport?: string; q?: string; nacin?: string; od?: string; do?: string; ocena?: string; sort?: string };
+type SP = { sport?: string; q?: string; tacno?: string; nacin?: string; od?: string; do?: string; ocena?: string; sort?: string };
 
 export default async function Shop({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
-  const { sport, q, nacin, ocena, sort = 'new' } = sp;
+  const { sport, nacin, ocena, sort = 'new' } = sp;
+  const typed = sp.q?.trim() || '';
+  const fix = correctQuery(typed);
+  const q = sp.tacno ? typed : fix.q;
+  const corrected = !sp.tacno && fix.changed;
   const od = sp.od ? Math.round(Number(sp.od) * 100) : null;
   const dO = sp.do ? Math.round(Number(sp.do) * 100) : null;
   const supabase = await createClient();
@@ -24,13 +29,13 @@ export default async function Shop({ searchParams }: { searchParams: Promise<SP>
     .select('id, name, kind, sport, mode, price_cents, currency, stock, low_stock_at, image_path, description')
     .eq('is_visible', true)
     .order('mode', { ascending: true });
-  query = sort === 'price_asc' ? query.order('price_cents', { ascending: true }) : sort === 'price_desc' ? query.order('price_cents', { ascending: false }) : query.order('created_at', { ascending: false });
+  query = sort === 'popular' ? query.order('view_count', { ascending: false }) : sort === 'price_asc' ? query.order('price_cents', { ascending: true }) : sort === 'price_desc' ? query.order('price_cents', { ascending: false }) : query.order('created_at', { ascending: false });
   if (od) query = query.gte('price_cents', od);
   if (dO) query = query.lte('price_cents', dO);
   if (sport && SPORTS.some((s) => s.key === sport)) query = query.eq('sport', sport);
   if (q) query = query.ilike('name', `%${q.replace(/[%_]/g, '')}%`);
   let lq = supabase.from('listings').select(LISTING_SELECT).eq('status', 'active').neq('mode', 'showcase').limit(60);
-  lq = sort === 'price_asc' ? lq.order('price_cents', { ascending: true, nullsFirst: false }) : sort === 'price_desc' ? lq.order('price_cents', { ascending: false, nullsFirst: false }) : lq.order('created_at', { ascending: false });
+  lq = sort === 'popular' ? lq.order('view_count', { ascending: false }).order('created_at', { ascending: false }) : sort === 'price_asc' ? lq.order('price_cents', { ascending: true, nullsFirst: false }) : sort === 'price_desc' ? lq.order('price_cents', { ascending: false, nullsFirst: false }) : lq.order('created_at', { ascending: false });
   if (nacin && ['fixed', 'auction', 'offers', 'trade'].includes(nacin)) lq = lq.eq('mode', nacin);
   if (od) lq = lq.gte('price_cents', od);
   if (dO) lq = lq.lte('price_cents', dO);
@@ -44,7 +49,8 @@ export default async function Shop({ searchParams }: { searchParams: Promise<SP>
     if (ocena === '10') return Number(ci?.grade) === 10;
     return true;
   });
-  const filtered = !!(nacin || od || dO || ocena || sort !== 'new');
+  const filtered = !!(nacin || od || dO || ocena);
+  const changedView = filtered || sort !== 'new';
 
   const hero = HERO[sport ?? ''] ?? HERO[''];
 
@@ -66,10 +72,18 @@ export default async function Shop({ searchParams }: { searchParams: Promise<SP>
           <span className="sr" style={{ position: 'absolute', left: -9999 }}>
             Pretraga
           </span>
-          <input className="inp" name="q" defaultValue={q ?? ''} placeholder="Traži kutiju, set, igrača…" />
+          <input className="inp" name="q" defaultValue={q} placeholder="Traži kutiju, set, igrača…" />
         </label>
         <button className="btn btn-dark">Traži</button>
       </form>
+      {corrected ? (
+        <p className="muted" style={{ fontSize: 14, marginTop: -12 }} role="status">
+          Prikazujem rezultate za <b style={{ color: 'var(--bc-carbon)' }}>{q}</b>.{' '}
+          <Link className="lnk" href={`/prodavnica?q=${encodeURIComponent(typed)}&tacno=1${sport ? '&sport=' + sport : ''}`}>
+            Traži tačno „{typed}”
+          </Link>
+        </p>
+      ) : null}
 
       <div className="chips" aria-label="Sport">
         <Link href="/prodavnica" className={'chip' + (!sport ? ' on' : '')}>
@@ -116,12 +130,13 @@ export default async function Shop({ searchParams }: { searchParams: Promise<SP>
           Sortiraj
           <select className="inp" name="sort" defaultValue={sort}>
             <option value="new">Najnovije</option>
+            <option value="popular">Najpopularnije</option>
             <option value="price_asc">Cena: od najniže</option>
             <option value="price_desc">Cena: od najviše</option>
           </select>
         </label>
         <button className="btn btn-dark">Primeni</button>
-        {filtered ? (
+        {changedView ? (
           <Link href={`/prodavnica${sport ? '?sport=' + sport : ''}`} className="btn btn-ghost">
             Poništi
           </Link>

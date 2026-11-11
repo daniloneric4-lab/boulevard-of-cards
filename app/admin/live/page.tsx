@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import ActionForm from '@/components/ActionForm';
+import AutoFixInput from '@/components/AutoFixInput';
 import SubmitButton from '@/components/SubmitButton';
 import { addPull, saveLive, setSlotStatus } from '../actions';
 import { date } from '@/lib/format';
@@ -15,7 +16,7 @@ function LiveFields({ e }: { e?: Record<string, unknown> }) {
       {e ? <input type="hidden" name="id" value={g('id')} /> : null}
       <label className="fld">
         Naziv
-        <input className="inp" name="title" defaultValue={g('title')} required placeholder="2× 2026 Topps Midnight Football Hobby" />
+        <AutoFixInput className="inp" name="title" defaultValue={g('title')} required placeholder="2× 2026 Topps Midnight Football Hobby" />
       </label>
       <label className="fld">
         Opis

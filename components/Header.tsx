@@ -2,18 +2,22 @@ import Link from 'next/link';
 import { getSessionInfo } from '@/lib/supabase/server';
 import NavLinks from './NavLinks';
 import UserMenu from './UserMenu';
+import { getMyStatus, type StatusItem } from '@/lib/status';
 
 export default async function Header() {
   const { supabase, user, profile, isAdmin } = await getSessionInfo();
   let cartCount = 0;
   let unread = 0;
   let unreadMsgs = 0;
+  let status: StatusItem[] = [];
   if (user) {
-    const [{ data: cart }, { count: n }, { data: convs }] = await Promise.all([
+    const [{ data: cart }, { count: n }, { data: convs }, st] = await Promise.all([
       supabase.from('cart_items').select('quantity').eq('user_id', user.id),
       supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('user_id', user.id).is('read_at', null),
       supabase.from('conversations').select('id').or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`),
+      getMyStatus(supabase, user.id),
     ]);
+    status = st;
     cartCount = (cart ?? []).reduce((s, r) => s + (r.quantity ?? 0), 0);
     unread = n ?? 0;
     const ids = (convs ?? []).map((c) => c.id);
@@ -55,6 +59,7 @@ export default async function Header() {
               avatar={profile?.avatar_url ?? null}
               isAdmin={isAdmin}
               unreadMsgs={unreadMsgs}
+              status={status}
             />
           ) : (
             <>

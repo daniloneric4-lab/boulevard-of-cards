@@ -3,6 +3,8 @@ import { useActionState, useState } from 'react';
 import { createListing } from '@/app/_act/market';
 import { SPORTS } from '@/lib/format';
 import CardArt from '@/components/CardArt';
+import { FixNote } from '@/components/AutoFixInput';
+import { autocorrect } from '@/lib/spell';
 
 const MODES: [string, string, string][] = [
   ['fixed', 'Kupi odmah', 'Fiksna cena, kupac plaća odmah'],
@@ -16,6 +18,7 @@ export default function SellForm({ initialTitle = '', initialSport = 'football',
   const [state, run, pending] = useActionState(createListing, { ok: false, msg: '' });
   const [mode, setMode] = useState(initialMode);
   const [title, setTitle] = useState(initialTitle);
+  const [prevTitle, setPrevTitle] = useState<string | null>(null);
   const [grader, setGrader] = useState('raw');
   const [grade, setGrade] = useState('10');
   const [price, setPrice] = useState('');
@@ -50,7 +53,21 @@ export default function SellForm({ initialTitle = '', initialSport = 'football',
           <h3>2. Proveri podatke</h3>
           <label className="fld">
             Kartica (godina, set, igrač, paralela)
-            <input className="inp" name="title" required minLength={4} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="2026 Topps Chrome F1 · Rookie Refractor /99" />
+            <input className="inp" name="title" required minLength={4} value={title}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                setPrevTitle(null);
+              }}
+              onBlur={() => {
+                const f = autocorrect(title);
+                if (f !== title) {
+                  setPrevTitle(title);
+                  setTitle(f);
+                }
+              }}
+              placeholder="2026 Topps Chrome F1 · Rookie Refractor /99"
+            />
+            {prevTitle !== null ? <FixNote onUndo={() => (setTitle(prevTitle), setPrevTitle(null))} /> : null}
           </label>
           <div className="row" style={{ gap: 10 }}>
             <label className="fld" style={{ flex: '1 1 160px' }}>

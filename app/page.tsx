@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import ProductCard, { type Product } from '@/components/ProductCard';
 import LogoIntro from '@/components/LogoIntro';
 import RotatingVideo from '@/components/RotatingVideo';
 import { date, money, sportLabel, gradeLabel, listingImage } from '@/lib/format';
@@ -19,25 +18,12 @@ const CATS = [
   { key: 'nfl', label: 'NFL', sub: 'Chrome, Midnight, rookie klasa', video: 'nfl' },
 ];
 
-const SERVICES = [
-  ['Gradiranje PSA', 'Zbirno slanje iz Srbije, bez carinske papirologije. Pratiš svaki korak.', '/usluge?t=grading', 'Pošalji karticu'],
-  ['Sef', 'Kartica ostaje kod nas, osigurana. Prodaješ i menjaš bez slanja.', '/usluge?t=vault', 'Otvori sef'],
-  ['Konsignacija', 'Mi prodajemo umesto tebe, ti odobravaš cenu i pratiš status.', '/usluge?t=consignment', 'Pošalji na prodaju'],
-  ['Otkup', 'Fiksna ponuda za tvoju karticu, novac čim kartica stigne.', '/usluge?t=buyback', 'Dobij ponudu'],
-];
-
 export default async function Home({ searchParams }: { searchParams: Promise<{ dobrodosao?: string }> }) {
   const { dobrodosao } = await searchParams;
   const { supabase, user } = await getSessionInfo();
   await supabase.rpc('settle_auctions');
   const today = new Date().toISOString().slice(0, 10);
-  const [{ data: products }, { data: releases }, { data: auctions }, { data: draws }, { data: lives }, { data: top }, mine] = await Promise.all([
-    supabase
-      .from('products')
-      .select('id, name, kind, sport, mode, price_cents, currency, stock, low_stock_at, image_path, description')
-      .eq('is_visible', true)
-      .order('created_at', { ascending: false })
-      .limit(8),
+  const [{ data: releases }, { data: auctions }, { data: draws }, { data: lives }, { data: top }] = await Promise.all([
     supabase
       .from('releases')
       .select('id, name, sport, box_format, release_date, sale_type, us_price_cents')
@@ -49,14 +35,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
     supabase.from('draws').select('id, status, opens_at, closes_at, draw_at, boxes_available, price_cents, currency, releases(name, sport, box_format, description)').in('status', ['scheduled', 'open']).order('closes_at').limit(1),
     supabase.from('live_events').select('id, title, starts_at, status, description').neq('status', 'ended').gte('starts_at', new Date(Date.now() - 3 * 3600_000).toISOString()).order('starts_at').limit(1),
     supabase.from('listings').select(LISTING_SELECT).eq('status', 'active').in('mode', ['fixed', 'auction']).order('price_cents', { ascending: false, nullsFirst: false }).limit(1),
-    user
-      ? Promise.all([
-          supabase.from('draw_entries').select('status', { count: 'exact' }).eq('user_id', user.id).in('status', ['entered', 'won', 'waitlist']),
-          supabase.from('auctions').select('listing_id', { count: 'exact', head: true }).eq('current_bidder_id', user.id),
-          supabase.from('orders').select('status', { count: 'exact' }).eq('buyer_id', user.id).in('status', ['pending_payment', 'paid', 'shipped', 'delivered']),
-          supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('user_id', user.id).is('read_at', null),
-        ])
-      : Promise.resolve(null),
   ]);
   const nextDraw = (releases ?? []).find((r) => r.sale_type === 'draw');
   const draw = (draws ?? [])[0];
@@ -64,14 +42,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
   const live = (lives ?? [])[0];
   const ending = ((auctions ?? []) as unknown as ListingRow[]).sort((a, b) => +new Date(one(a.auctions)?.ends_at ?? 0) - +new Date(one(b.auctions)?.ends_at ?? 0)).slice(0, 4);
   const feat = ((top ?? []) as unknown as ListingRow[])[0];
-  const status = mine
-    ? [
-        { t: 'Izvlačenja', v: mine[0].count ?? 0, sub: (mine[0].data ?? []).some((x) => x.status === 'won') ? 'Izvučen si! Plati u roku' : 'aktivnih prijava', href: '/profil' },
-        { t: 'Vodiš na aukcijama', v: mine[1].count ?? 0, sub: 'trenutno najviša ponuda', href: '/aukcije?view=mine' },
-        { t: 'Porudžbine u toku', v: mine[2].count ?? 0, sub: 'plaćanje, slanje, prijem', href: '/profil' },
-        { t: 'Obaveštenja', v: mine[3].count ?? 0, sub: 'nepročitanih', href: '/obavestenja' },
-      ]
-    : null;
 
   return (
     <>
@@ -128,21 +98,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
             Dobrodošao na bulevar! Prilagodili smo ti obaveštenja. Sledeći korak: <Link href="/prodaj" className="lnk">dodaj prvu karticu</Link> ili <Link href="/izvlacenja" className="lnk">prijavi se za izvlačenje</Link>.
           </div>
         </div>
-      ) : null}
-
-      {status ? (
-        <section className="wrap section stack" style={{ paddingBottom: 0 }}>
-          <h2>Moj status</h2>
-          <div className="kv">
-            {status.map((m) => (
-              <Link key={m.t} href={m.href} style={{ textDecoration: 'none', background: 'var(--bc-surface)', borderRadius: 14, padding: 14, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span className="mono muted" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '.06em' }}>{m.t}</span>
-                <b style={{ fontFamily: 'var(--font-display)', fontSize: 26 }}>{m.v}</b>
-                <span className="muted" style={{ fontSize: 13 }}>{m.sub}</span>
-              </Link>
-            ))}
-          </div>
-        </section>
       ) : null}
 
       {draw || nextDraw ? (
@@ -242,24 +197,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
         </section>
       ) : null}
 
-      <section className="wrap stack">
-        <div className="row between">
-          <h2>U prodavnici</h2>
-          <Link href="/prodavnica" className="btn btn-ghost btn-sm">
-            Sve iz prodavnice
-          </Link>
-        </div>
-        {products && products.length ? (
-          <div className="grid">
-            {(products as Product[]).map((p) => (
-              <ProductCard key={p.id} p={p} />
-            ))}
-          </div>
-        ) : (
-          <div className="alert alert-info">Prvi proizvodi stižu uskoro.</div>
-        )}
-      </section>
-
       <section className="wrap section stack">
         <div className="row between">
           <div className="stack" style={{ gap: 4 }}>
@@ -322,21 +259,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
             <CardArt seed="live-b" grade="RC" />
             <CardArt seed="live-c" grade="/99" size="sm" />
           </div>
-        </div>
-      </section>
-
-      <section className="wrap section stack">
-        <span className="kicker">Usluge</span>
-        <h2>Kartica ne mora nigde da putuje sama</h2>
-        <div className="steps">
-          {SERVICES.map(([t, x, href, cta], i) => (
-            <Link key={t} href={href} className="step" style={{ textDecoration: 'none' }}>
-              <span className="step-n">{i + 1}</span>
-              <b>{t}</b>
-              <span className="muted" style={{ fontSize: 14 }}>{x}</span>
-              <span className="lnk" style={{ marginTop: 'auto' }}>{cta} →</span>
-            </Link>
-          ))}
         </div>
       </section>
 

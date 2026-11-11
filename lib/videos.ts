@@ -17,3 +17,6 @@ export const CATEGORY_VIDEOS: Record<string, { src: string; poster: string; pos?
   other: [{ src: '/hero-kartice.mp4', poster: '/hero-kartice.jpg' }],
   all: [{ src: '/hero-kartice.mp4', poster: '/hero-kartice.jpg' }],
 };
+
+// svi sportski videi zajedno (npr. vrh strane Aukcije kad nije izabran sport)
+CATEGORY_VIDEOS.mix = [...CATEGORY_VIDEOS.football, ...CATEGORY_VIDEOS.f1, ...CATEGORY_VIDEOS.nba, ...CATEGORY_VIDEOS.nfl];
