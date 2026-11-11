@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getSessionInfo } from '@/lib/supabase/server';
 import NavLinks from './NavLinks';
 import UserMenu from './UserMenu';
+import LiveSync from './LiveSync';
 import { getMyStatus, type StatusItem } from '@/lib/status';
 
 export default async function Header() {
@@ -41,6 +42,14 @@ export default async function Header() {
         <NavLinks />
         <div className="hdr-act">
           {user ? (
+            <Link href="/poruke" className="icon-btn" aria-label={unreadMsgs ? `Poruke, ${unreadMsgs} nove` : 'Poruke'}>
+              <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 5h16v11H8l-4 4z" />
+              </svg>
+              {unreadMsgs ? <span className="count-badge" aria-hidden="true">{unreadMsgs > 9 ? '9+' : unreadMsgs}</span> : null}
+            </Link>
+          ) : null}
+          {user ? (
             <Link href="/obavestenja" className="icon-btn" aria-label={unread ? `Obaveštenja, ${unread} nova` : 'Obaveštenja'}>
               <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M6 9a6 6 0 0 1 12 0c0 5 2 6.5 2 6.5H4S6 14 6 9" />
@@ -73,6 +82,7 @@ export default async function Header() {
           )}
         </div>
       </div>
+      {user ? <LiveSync userId={user.id} /> : null}
     </header>
   );
 }

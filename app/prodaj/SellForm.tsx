@@ -1,5 +1,6 @@
 'use client';
-import { useActionState, useState } from 'react';
+import { useActionState, useState, useTransition } from 'react';
+import { createClient } from '@/lib/supabase/client';
 import { createListing } from '@/app/_act/market';
 import { SPORTS } from '@/lib/format';
 import CardArt from '@/components/CardArt';
@@ -14,8 +15,30 @@ const MODES: [string, string, string][] = [
   ['showcase', 'Samo izloži', 'Vitrina, bez prodaje'],
 ];
 
-export default function SellForm({ initialTitle = '', initialSport = 'football', initialMode = 'fixed' }: { initialTitle?: string; initialSport?: string; initialMode?: string }) {
+const MAX_RSD = 20_000_000;
+
+// smanji sliku pre slanja (najviše 1600 px, JPEG), da otpremanje bude brzo i pouzdano
+async function shrink(file: File): Promise<Blob> {
+  try {
+    const bmp = await createImageBitmap(file);
+    const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas');
+    c.width = Math.round(bmp.width * k);
+    c.height = Math.round(bmp.height * k);
+    c.getContext('2d')!.drawImage(bmp, 0, 0, c.width, c.height);
+    const out = await new Promise<Blob | null>((r) => c.toBlob(r, 'image/jpeg', 0.86));
+    return out ?? file;
+  } catch {
+    return file;
+  }
+}
+
+export default function SellForm({ initialTitle = '', initialSport = 'football', initialMode = 'fixed', userId }: { initialTitle?: string; initialSport?: string; initialMode?: string; userId: string }) {
   const [state, run, pending] = useActionState(createListing, { ok: false, msg: '' });
+  const [, start] = useTransition();
+  const [imgPath, setImgPath] = useState('');
+  const [upState, setUpState] = useState<'' | 'busy' | 'ok' | 'err'>('');
+  const [localErr, setLocalErr] = useState('');
   const [mode, setMode] = useState(initialMode);
   const [title, setTitle] = useState(initialTitle);
   const [prevTitle, setPrevTitle] = useState<string | null>(null);
@@ -27,26 +50,58 @@ export default function SellForm({ initialTitle = '', initialSport = 'football',
 
   return (
     <div className="side">
-      <form action={run} className="stack" style={{ gap: 22 }}>
+      <form
+        className="stack"
+        style={{ gap: 22 }}
+        onSubmit={(e) => {
+          // ne koristimo action={run} da se forma ne bi obrisala ako nešto ne prođe
+          e.preventDefault();
+          setLocalErr('');
+          if (upState === 'busy') return setLocalErr('Slika se još šalje, sačekaj sekund.');
+          if (!imgPath) return setLocalErr('Dodaj sliku kartice. Oglas bez slike ne može da se objavi.');
+          const n = Number(price.replace(/\s/g, '').replace(',', '.'));
+          if (price && (!Number.isFinite(n) || n <= 0)) return setLocalErr('Cena nije ispravna.');
+          if (n > MAX_RSD) return setLocalErr(`Najveća cena je ${MAX_RSD.toLocaleString('sr-Latn-RS')} RSD.`);
+          const fd = new FormData(e.currentTarget);
+          start(() => run(fd));
+        }}
+      >
+        <input type="hidden" name="image_path" value={imgPath} />
         <section className="card stack">
           <h3>1. Slikaj karticu</h3>
           <p className="muted" style={{ fontSize: 14 }}>
             Slikaj prednju stranu ravno, bez odsjaja. Ako je kartica u kućištu, neka se vidi ocena.
           </p>
           <label className="fld">
-            Fotografija (do 4 MB)
+            Fotografija (obavezno)
             <input
               className="inp"
               type="file"
-              name="image"
               accept="image/*"
               capture="environment"
-              onChange={(e) => {
+              onChange={async (e) => {
                 const f = e.target.files?.[0];
-                setPreview(f ? URL.createObjectURL(f) : null);
+                if (!f) return;
+                setPreview(URL.createObjectURL(f));
+                setUpState('busy');
+                setImgPath('');
+                const blob = await shrink(f);
+                const path = `${userId}/${crypto.randomUUID()}.jpg`;
+                const { error } = await createClient().storage.from('listing-images').upload(path, blob, { contentType: 'image/jpeg' });
+                if (error) {
+                  setUpState('err');
+                } else {
+                  setImgPath(path);
+                  setUpState('ok');
+                }
               }}
             />
           </label>
+          {upState === 'busy' ? <span className="muted" style={{ fontSize: 13 }}>Šaljem sliku…</span> : null}
+          {upState === 'ok' ? <span style={{ fontSize: 13, color: 'var(--bc-green)' }}>✓ Slika je spremna</span> : null}
+          {upState === 'err' ? (
+            <span style={{ fontSize: 13, color: '#8a1c13' }}>Slika nije poslata. Pokušaj ponovo ili izaberi drugu (JPG, PNG ili WEBP).</span>
+          ) : null}
         </section>
 
         <section className="card stack">
@@ -155,12 +210,12 @@ export default function SellForm({ initialTitle = '', initialSport = 'football',
           ) : null}
         </section>
 
-        {state.msg ? (
+        {localErr || state.msg ? (
           <div className="alert alert-err" role="status">
-            {state.msg}
+            {localErr || state.msg}
           </div>
         ) : null}
-        <button className="btn btn-red" disabled={pending} style={{ alignSelf: 'flex-start', minHeight: 52, padding: '0 26px' }}>
+        <button className="btn btn-red" disabled={pending || upState === 'busy'} style={{ alignSelf: 'flex-start', minHeight: 52, padding: '0 26px' }}>
           {pending ? 'Objavljujem…' : mode === 'showcase' ? 'Izloži u vitrini' : 'Objavi oglas'}
         </button>
       </form>

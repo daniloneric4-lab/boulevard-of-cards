@@ -1,10 +1,12 @@
 'use client';
-import { useActionState, useState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import { placeBid } from '@/app/_act/market';
 
 export default function BidForm({ listingId, min, step }: { listingId: string; min: number; step: number }) {
   const [state, run, pending] = useActionState(placeBid, { ok: false, msg: '' });
   const [amt, setAmt] = useState(String(min / 100));
+  // kad neko drugi licitira (uživo), pomeri predlog na novu minimalnu ponudu
+  useEffect(() => setAmt(String(min / 100)), [min]);
   const quick = [min, min + step, min + step * 3];
   return (
     <form action={run} className="stack" style={{ gap: 10 }}>

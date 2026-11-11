@@ -59,6 +59,15 @@ export async function toggleWatch(form: FormData) {
   revalidatePath(`/oglas/${id}`);
   revalidatePath('/aukcije');
 }
+export async function acceptBid(form: FormData) {
+  const id = s(form, 'listing_id');
+  const { supabase } = await mustUser(`/oglas/${id}`);
+  const { error } = await supabase.rpc('accept_bid', { p_listing_id: id });
+  if (error) redirect(`/oglas/${id}?greska=${encodeURIComponent(clean(error.message))}`);
+  revalidatePath(`/oglas/${id}`);
+  revalidatePath('/aukcije');
+  redirect(`/oglas/${id}?prihvaceno=1`);
+}
 export async function buyListing(_: State, form: FormData): Promise<State> {
   const { supabase, user } = await me();
   if (!user) return fail('Prijavi se da bi kupio.');
@@ -222,12 +231,18 @@ export async function createListing(_: State, form: FormData): Promise<State> {
   const grade = grader === 'raw' ? null : Number(s(form, 'grade').replace(',', '.')) || null;
   const price = toCents(form.get('price'));
   if ((mode === 'fixed' || mode === 'auction') && !price) return fail(mode === 'auction' ? 'Unesi početnu cenu.' : 'Unesi cenu.');
-  let img: string | null = null;
-  try {
-    img = await uploadImage(supabase, user.id, form.get('image') as File | null);
-  } catch (e) {
-    return fail((e as Error).message);
+  if (price && price > 2_000_000_000) return fail('Najveća cena je 20.000.000 RSD.');
+  // slika se šalje iz pregledača odmah po izboru; ovde samo proveravamo da je tvoja i da postoji
+  let img: string | null = s(form, 'image_path') || null;
+  if (img && !img.startsWith(`${user.id}/`)) img = null;
+  if (!img) {
+    try {
+      img = await uploadImage(supabase, user.id, form.get('image') as File | null);
+    } catch (e) {
+      return fail((e as Error).message);
+    }
   }
+  if (!img) return fail('Dodaj sliku kartice. Oglas bez slike ne može da se objavi.');
   const { data: prof } = await supabase.from('profiles').select('city, country').eq('id', user.id).single();
   const { data: item, error: e1 } = await supabase
     .from('collection_items')
@@ -269,7 +284,11 @@ export async function createListing(_: State, form: FormData): Promise<State> {
     .select('id')
     .single();
   if (e2 || !listing) return fail(clean(e2?.message));
-  if (img) await supabase.from('listing_images').insert({ listing_id: listing.id, storage_path: img, position: 0 });
+  const { error: eImg } = await supabase.from('listing_images').insert({ listing_id: listing.id, storage_path: img, position: 0 });
+  if (eImg) {
+    await supabase.from('listings').delete().eq('id', listing.id);
+    return fail('Slika nije sačuvana uz oglas. Pokušaj ponovo.');
+  }
   if (mode === 'auction') {
     const days = Math.min(14, Math.max(1, parseInt(s(form, 'days') || '7', 10)));
     const { error: e3 } = await supabase.from('auctions').insert({

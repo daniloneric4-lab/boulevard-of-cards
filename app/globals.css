@@ -167,6 +167,12 @@ details.box summary { cursor: pointer; font-weight: 600; }
 a.lnk { color: var(--bc-red-dk); font-weight: 600; text-decoration: none; }
 a.lnk:hover { text-decoration: underline; }
 .icon-btn { position: relative; width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--bc-line-dk); display: inline-flex; align-items: center; justify-content: center; color: var(--bc-white); }
+.toasts { position: fixed; right: 16px; bottom: 16px; z-index: 80; display: flex; flex-direction: column; gap: 8px; width: min(340px, calc(100vw - 32px)); }
+.toast { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 12px; background: var(--bc-carbon); color: #fff; box-shadow: 0 16px 40px rgba(0,0,0,.3); text-decoration: none; border-left: 4px solid var(--bc-red); animation: toast-in .25s ease; }
+.toast b { font-size: 14px; }
+.toast span { font-size: 13px; color: var(--bc-line); }
+@keyframes toast-in { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
 .count-badge { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: var(--bc-red); color: #fff; font: 600 11px var(--font-mono); display: flex; align-items: center; justify-content: center; }
 .dot-badge { position: absolute; top: 0; right: 0; width: 10px; height: 10px; border-radius: 50%; background: var(--bc-red); border: 2px solid var(--bc-carbon); }
 .ava { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--bc-red); color: #fff; font-family: var(--font-display); font-weight: 700; overflow: hidden; flex: none; }

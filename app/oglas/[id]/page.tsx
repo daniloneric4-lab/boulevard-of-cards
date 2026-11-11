@@ -7,7 +7,7 @@ import Countdown from '@/components/Countdown';
 import Avatar from '@/components/Avatar';
 import SubmitButton from '@/components/SubmitButton';
 import ListingTile from '@/components/ListingTile';
-import { startConversation, toggleWatch, reportContent } from '@/app/_act/market';
+import { acceptBid, startConversation, toggleWatch, reportContent } from '@/app/_act/market';
 import { LISTING_MODE, date, gradeLabel, listingImage, money, sportLabel } from '@/lib/format';
 import { LISTING_SELECT, one, type ListingRow } from '@/lib/listings';
 import BidForm from './BidForm';
@@ -30,9 +30,9 @@ const PROTECT = [
   'Ako nešto nije u redu, otvaraš spor i novac ostaje zaključan.',
 ];
 
-export default async function ListingPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ novo?: string }> }) {
+export default async function ListingPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ novo?: string; prihvaceno?: string; greska?: string }> }) {
   const { id } = await params;
-  const { novo } = await searchParams;
+  const { novo, prihvaceno, greska } = await searchParams;
   const { supabase, user } = await getSessionInfo();
   await supabase.rpc('settle_auctions');
   const { data } = await supabase.from('listings').select(LISTING_SELECT + ', description').eq('id', id).maybeSingle();
@@ -49,8 +49,26 @@ export default async function ListingPage({ params, searchParams }: { params: Pr
     supabase.from('listings').select('id', { count: 'exact', head: true }).eq('seller_id', l.seller_id).eq('status', 'sold'),
     supabase.from('reviews').select('rating').eq('reviewee_id', l.seller_id),
     supabase.from('listings').select(LISTING_SELECT).eq('status', 'active').eq('sport', l.sport).neq('id', id).limit(4),
-    supabase.from('listings').select('collection_item_id').eq('id', id).single(),
+    supabase.from('listings').select('collection_item_id, view_count, watch_count').eq('id', id).single(),
   ]);
+  // prodavac vidi ko je gledao i ko prati
+  let viewers: string[] = [];
+  let watchers: string[] = [];
+  if (mine) {
+    const [{ data: v }, { data: w }] = await Promise.all([
+      supabase.from('listing_views').select('viewer_id, created_at').eq('listing_id', id).order('created_at', { ascending: false }).limit(50),
+      supabase.from('listing_watches').select('user_id').eq('listing_id', id).limit(50),
+    ]);
+    const ids = [...new Set([...(v ?? []).map((x) => x.viewer_id), ...(w ?? []).map((x) => x.user_id)])];
+    const { data: ps } = ids.length ? await supabase.from('profiles').select('id, username').in('id', ids) : { data: [] };
+    const name = (uid: string) => (ps ?? []).find((p) => p.id === uid)?.username ?? 'korisnik';
+    viewers = (v ?? []).map((x) => name(x.viewer_id));
+    watchers = (w ?? []).map((x) => name(x.user_id));
+  }
+  const views = ciFull?.view_count ?? 0;
+  const watchCount = ciFull?.watch_count ?? 0;
+  const topBidder = (bids ?? [])[0] as unknown as { bidder: { username: string } | { username: string }[] | null } | undefined;
+  const topName = topBidder ? (Array.isArray(topBidder.bidder) ? topBidder.bidder[0]?.username : topBidder.bidder?.username) : null;
   const { data: events } = ciFull?.collection_item_id
     ? await supabase.from('card_events').select('event_type, description, price_cents, currency, occurred_at').eq('collection_item_id', ciFull.collection_item_id).order('occurred_at')
     : { data: [] };
@@ -66,6 +84,16 @@ export default async function ListingPage({ params, searchParams }: { params: Pr
       {novo ? (
         <div className="alert alert-ok" role="status">
           Oglas je objavljen i vidi se u prodavnici. Kartica je dodata u tvoju kolekciju.
+        </div>
+      ) : null}
+      {prihvaceno ? (
+        <div className="alert alert-ok" role="status">
+          Prihvatio si ponudu. Aukcija je završena, kupac je dobio obaveštenje i ima 24 sata da plati. Porudžbinu pratiš u panelu prodavca.
+        </div>
+      ) : null}
+      {greska ? (
+        <div className="alert alert-err" role="alert">
+          {greska}
         </div>
       ) : null}
       <div className="row" style={{ gap: 6, fontSize: 14 }}>
@@ -113,6 +141,25 @@ export default async function ListingPage({ params, searchParams }: { params: Pr
             {l.is_checked_box ? <span className="pill pill-green">Proverena kutija</span> : null}
           </div>
           <h1 style={{ fontSize: 'clamp(26px,3.4vw,40px)' }}>{l.title}</h1>
+          <div className="row mono muted" style={{ gap: 14, fontSize: 13 }}>
+            <span>👁 {views} {views === 1 ? 'pregled' : 'pregleda'}</span>
+            <span>★ {watchCount} {watchCount === 1 ? 'prati' : 'prate'}</span>
+          </div>
+          {mine && (viewers.length || watchers.length) ? (
+            <div className="card stack" style={{ gap: 6, fontSize: 14 }}>
+              {watchers.length ? (
+                <span>
+                  <b>Prate:</b> {watchers.map((u) => '@' + u).join(', ')}
+                </span>
+              ) : null}
+              {viewers.length ? (
+                <span>
+                  <b>Pogledali:</b> {viewers.map((u) => '@' + u).join(', ')}
+                </span>
+              ) : null}
+              <span className="muted" style={{ fontSize: 12 }}>Vidiš samo ti. Brojimo prijavljene korisnike, svakog jednom.</span>
+            </div>
+          ) : null}
           {l.description ? <p className="muted" style={{ whiteSpace: 'pre-line' }}>{l.description}</p> : null}
 
           {a ? (
@@ -134,7 +181,21 @@ export default async function ListingPage({ params, searchParams }: { params: Pr
               {user && a.current_bidder_id === user.id && active ? <div className="alert alert-ok">Vodiš. Javićemo ti odmah ako te neko nadmaši.</div> : null}
               {active && !ended ? (
                 mine ? (
-                  <div className="alert alert-info">Ovo je tvoja aukcija.</div>
+                  a.current_bidder_id ? (
+                    <form action={acceptBid} className="stack" style={{ gap: 8 }}>
+                      <input type="hidden" name="listing_id" value={l.id} />
+                      <span style={{ fontSize: 14 }}>
+                        Najviša ponuda: <b>{money(a.current_bid_cents, l.currency)}</b>
+                        {topName ? ` od @${topName}` : ''}
+                      </span>
+                      <SubmitButton className="btn btn-red" pendingText="Završavam aukciju…">
+                        Prihvati {money(a.current_bid_cents, l.currency)} i završi aukciju
+                      </SubmitButton>
+                      <span className="muted" style={{ fontSize: 12 }}>Kupac odmah dobija obaveštenje i 24 sata da plati.</span>
+                    </form>
+                  ) : (
+                    <div className="alert alert-info">Ovo je tvoja aukcija. Kad stigne prva ponuda, javljamo ti i možeš odmah da je prihvatiš.</div>
+                  )
                 ) : user ? (
                   <BidForm listingId={l.id} min={minBid} step={a.min_increment_cents} />
                 ) : (
