@@ -3,13 +3,17 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
-const ERR: Record<string, string> = {
+const ERR_RAW: Record<string, string> = {
   'Invalid login credentials': 'Pogrešna e-pošta ili lozinka. Ako ne možeš da se setiš lozinke, klikni „Zaboravljena lozinka“ i postavi novu.',
   'Email not confirmed': 'Nalog još nije potvrđen. Otvori mejl koji smo ti poslali i klikni na link, pa se prijavi.',
-  'Email rate limit exceeded': 'Poslato je previše mejlova. Sačekaj nekoliko minuta pa pokušaj ponovo.',
+  'email rate limit exceeded': 'Supabase je privremeno zaustavio slanje mejlova jer ih je poslato previše (besplatni plan šalje oko 2 mejla na sat). Sačekaj sat vremena pa pokušaj ponovo.',
   'Password should be at least 6 characters.': 'Lozinka mora imati bar 8 znakova.',
   'User already registered': 'Nalog sa ovom e-poštom već postoji. Prijavi se.',
 };
+
+const ERR: Record<string, string> = new Proxy(ERR_RAW, {
+  get: (t, k: string) => t[k] ?? Object.entries(t).find(([x]) => x.toLowerCase() === String(k).toLowerCase())?.[1],
+});
 
 export default function AuthForm({ next, initial = 'login' }: { next: string; initial?: 'login' | 'signup' }) {
   const [mode, setMode] = useState<'login' | 'signup' | 'reset'>(initial);
