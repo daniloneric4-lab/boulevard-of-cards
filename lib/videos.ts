@@ -12,7 +12,7 @@ export const CATEGORY_VIDEOS: Record<string, { src: string; poster: string; pos?
   nba: [{ src: '/kat-nba-1.mp4', poster: '/kat-nba-1.jpg' }],
   nfl: [
     { src: '/kat-nfl-1.mp4', poster: '/kat-nfl-1.jpg' }, // generisan
-    { src: '/kat-nfl-2.mp4', poster: '/kat-nfl-2.jpg', pos: 'center 30%' }, // utakmica, kadar spusten
+    { src: '/kat-nfl-2.mp4', poster: '/kat-nfl-2.jpg', pos: 'center 80%' }, // utakmica: vidi se donji deo kadra (teren i igraci)
   ],
   other: [{ src: '/hero-kartice.mp4', poster: '/hero-kartice.jpg' }],
   all: [{ src: '/hero-kartice.mp4', poster: '/hero-kartice.jpg' }],
