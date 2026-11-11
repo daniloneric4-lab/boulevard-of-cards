@@ -180,7 +180,7 @@ export async function requestService(_: State, form: FormData): Promise<State> {
   const { supabase, user } = await me();
   if (!user) return fail('Prijavi se da bi poslao prijavu.');
   const service = s(form, 'service');
-  if (!['grading', 'vault', 'consignment', 'buyback'].includes(service)) return fail('Izaberi uslugu.');
+  if (!['vault', 'consignment', 'buyback'].includes(service)) return fail('Izaberi uslugu.');
   const raw = s(form, 'notes').slice(0, 2000);
   const item = s(form, 'collection_item_id') || null;
   if (!raw && !item) return fail('Napiši koju karticu šalješ.');
@@ -334,16 +334,18 @@ export async function addWish(_: State, form: FormData): Promise<State> {
     query: query || null,
     catalog_id: catalog,
     max_price_cents: toCents(form.get('max_price')),
-    is_public: true,
+    is_public: false,
   });
   if (error) return fail(clean(error.message));
   revalidatePath('/kolekcija');
-  return ok('Dodato na listu želja. Javljamo ti kad se pojavi.');
+  revalidatePath('/lista-zelja');
+  return ok('Dodato na listu želja. Javljamo ti kad se pojavi na sajtu.');
 }
 export async function removeWish(form: FormData) {
   const { supabase } = await mustUser('/kolekcija');
   await supabase.from('wishlist').delete().eq('id', s(form, 'id'));
   revalidatePath('/kolekcija');
+  revalidatePath('/lista-zelja');
 }
 export async function addCatalogToCollection(form: FormData) {
   const id = s(form, 'catalog_id');

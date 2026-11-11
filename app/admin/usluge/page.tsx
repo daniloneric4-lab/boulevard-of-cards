@@ -17,7 +17,7 @@ export default async function AdminServices() {
     <>
       <div className="stack" style={{ gap: 6 }}>
         <h1 style={{ fontSize: 36 }}>Usluge</h1>
-        <p className="muted">Gradiranje, sef, konsignacija i otkup. Upiši cenu, broj zbirne pošiljke i vodi status, korisnik ga vidi u kolekciji.</p>
+        <p className="muted">Sef, konsignacija i otkup. Upiši cenu i vodi status, korisnik ga vidi u kolekciji.</p>
       </div>
       {(reqs ?? []).length ? (
         <div className="tbl-wrap">

@@ -4,28 +4,11 @@ import { getSessionInfo } from '@/lib/supabase/server';
 import PageHero from '@/components/PageHero';
 import ActionForm from '@/components/ActionForm';
 import { requestService } from '@/app/_act/market';
-import GradeCalc from './GradeCalc';
 
 export const metadata: Metadata = { title: 'Usluge' };
 export const dynamic = 'force-dynamic';
 
 const DEFS: Record<string, { label: string; kicker: string; title: string; text: string; f1: string; p1: string; optLabel: string; opts: [string, string][]; cta: string; flow: string[] }> = {
-  grading: {
-    label: 'Gradiranje PSA',
-    kicker: 'Gradiranje · zbirna pošiljka',
-    title: 'Pošalji karticu na PSA preko nas',
-    text: 'Šaljemo zbirno iz Srbije, pa ti je jeftinije i bez carinske papirologije. Javljamo svaki korak: primljeno, poslato, ocenjeno, vraćeno.',
-    f1: 'Koje kartice šalješ',
-    p1: 'npr. Chrome F1 RC Refractor /99',
-    optLabel: 'Brzina',
-    opts: [
-      ['Standard', 'oko 45 radnih dana'],
-      ['Ekspres', 'oko 15 radnih dana'],
-      ['Super ekspres', 'za najvrednije kartice'],
-    ],
-    cta: 'Pošalji prijavu',
-    flow: ['Prijaviš kartice ovde', 'Doneseš ili pošalješ ih nama, uz etiketu', 'Šaljemo zbirno u PSA i javljamo status', 'Vraćamo ocenjene kartice ili ih čuvamo u sefu'],
-  },
   vault: {
     label: 'Sef',
     kicker: 'Sef · osigurano čuvanje',
@@ -78,14 +61,14 @@ const DEFS: Record<string, { label: string; kicker: string; title: string; text:
 
 export default async function Services({ searchParams }: { searchParams: Promise<{ t?: string }> }) {
   const { t } = await searchParams;
-  const key = t && DEFS[t] ? t : 'grading';
+  const key = t && DEFS[t] ? t : 'vault';
   const d = DEFS[key];
   const { supabase, user } = await getSessionInfo();
   const { data: items } = user ? await supabase.from('collection_items').select('id, title').eq('owner_id', user.id).order('created_at', { ascending: false }).limit(100) : { data: [] };
 
   return (
     <>
-      <PageHero kicker="Usluge" title="Kartica ne mora nigde da putuje sama" lead="Gradiranje, sef, prodaja umesto tebe i otkup. Sve prijave pratiš u svojoj kolekciji.">
+      <PageHero kicker="Usluge" title="Kartica ne mora nigde da putuje sama" lead="Sef, prodaja umesto tebe i otkup. Sve prijave pratiš u svojoj kolekciji.">
         <div className="chips" role="tablist" aria-label="Usluge">
           {Object.entries(DEFS).map(([k, v]) => (
             <Link key={k} href={`/usluge?t=${k}`} role="tab" aria-selected={k === key} className="chip" style={k === key ? { background: '#fff', color: 'var(--bc-carbon)' } : { background: 'transparent', color: '#fff', borderColor: 'var(--bc-line-dk)' }}>
@@ -137,16 +120,6 @@ export default async function Services({ searchParams }: { searchParams: Promise
                   {d.f1}
                   <textarea className="inp" name="notes" placeholder={d.p1} />
                 </label>
-                {key === 'grading' ? (
-                  <label className="fld">
-                    Kuća za gradiranje
-                    <select className="inp" name="grading_company" defaultValue="psa">
-                      <option value="psa">PSA</option>
-                      <option value="bgs">BGS</option>
-                      <option value="sgc">SGC</option>
-                    </select>
-                  </label>
-                ) : null}
                 <fieldset className="stack" style={{ border: 0, padding: 0, margin: 0, gap: 8 }}>
                   <legend style={{ fontWeight: 600, fontSize: 13, marginBottom: 8 }}>{d.optLabel}</legend>
                   {d.opts.map(([l, sub], i) => (
@@ -171,7 +144,6 @@ export default async function Services({ searchParams }: { searchParams: Promise
             )}
           </section>
         </div>
-        {key === 'grading' ? <GradeCalc /> : null}
       </div>
     </>
   );

@@ -21,14 +21,15 @@ export default async function CatalogCard({ params }: { params: Promise<{ id: st
     supabase.from('listings').select('id, title, price_cents, currency, updated_at').eq('catalog_id', id).eq('status', 'sold').order('updated_at', { ascending: false }).limit(10),
     user ? supabase.from('collection_items').select('id', { count: 'exact', head: true }).eq('owner_id', user.id).eq('catalog_id', id) : Promise.resolve({ count: 0 }),
   ]);
-  const title = `${c.player}${c.parallel ? ' · ' + c.parallel : ''}${c.print_run ? ' /' + c.print_run : ''}`;
+  const title = c.title || `${c.player}${c.parallel ? ' · ' + c.parallel : ''}${c.print_run ? ' /' + c.print_run : ''}`;
+  const setName = [c.year, c.set_name].filter(Boolean).join(' ') || '—';
   const prices = (sold ?? []).map((s) => s.price_cents ?? 0).filter(Boolean);
   const avg = prices.length ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length) : null;
 
   return (
     <div className="page">
-      <Link href="/katalog" className="lnk">
-        ← Katalog
+      <Link href="/lista-zelja" className="lnk">
+        ← Lista želja
       </Link>
       <div className="two">
         <FlipCard
@@ -37,7 +38,7 @@ export default async function CatalogCard({ params }: { params: Promise<{ id: st
           image={c.image_url}
           title={title}
           back={[
-            { label: 'Set', value: `${c.year} ${c.set_name}` },
+            { label: 'Set', value: setName },
             { label: 'Broj', value: c.card_number ? '#' + c.card_number : '—' },
             { label: 'Tim', value: c.team || '—' },
             { label: 'Tiraž', value: c.print_run ? '/' + c.print_run : '—' },
@@ -45,7 +46,7 @@ export default async function CatalogCard({ params }: { params: Promise<{ id: st
         />
         <div className="stack" style={{ gap: 18 }}>
           <span className="kicker">
-            {sportLabel(c.sport)} · {c.year} {c.set_name}
+            {sportLabel(c.sport)}{setName !== '—' ? ' · ' + setName : ''}
           </span>
           <h1 style={{ fontSize: 'clamp(28px,4vw,46px)' }}>{title}</h1>
           <div className="kv">

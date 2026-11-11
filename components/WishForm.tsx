@@ -1,8 +1,9 @@
 'use client';
 import { useActionState } from 'react';
 import { addWish } from '@/app/_act/market';
+import AutoFixInput from './AutoFixInput';
 
-export default function WishForm({ catalogId, query, compact = false }: { catalogId?: string; query?: string; compact?: boolean }) {
+export default function WishForm({ catalogId, query, compact = false, suggestions }: { catalogId?: string; query?: string; compact?: boolean; suggestions?: string[] }) {
   const [state, run, pending] = useActionState(addWish, { ok: false, msg: '' });
   return (
     <form action={run} className="stack" style={{ gap: 10 }}>
@@ -10,7 +11,14 @@ export default function WishForm({ catalogId, query, compact = false }: { catalo
       {!catalogId ? (
         <label className="fld">
           Šta tražiš?
-          <input className="inp" name="query" defaultValue={query} placeholder="npr. Jokić Chrome rookie" required />
+          <AutoFixInput className="inp" name="query" defaultValue={query} placeholder="npr. Jokić Chrome Refractor /99" required list={suggestions?.length ? 'wish-suggest' : undefined} autoComplete="off" />
+          {suggestions?.length ? (
+            <datalist id="wish-suggest">
+              {suggestions.map((t) => (
+                <option key={t} value={t} />
+              ))}
+            </datalist>
+          ) : null}
         </label>
       ) : (
         <input type="hidden" name="query" value={query ?? ''} />

@@ -20,7 +20,7 @@ export default async function Collection({ searchParams }: { searchParams: Promi
   const { supabase, user, profile } = await requireUser('/kolekcija');
   const [{ data: items }, { data: wish }, { data: svc }, { data: listings }] = await Promise.all([
     supabase.from('collection_items').select('*').eq('owner_id', user.id).order('created_at', { ascending: false }),
-    supabase.from('wishlist').select('id, query, max_price_cents, card_catalog(player, set_name, year, parallel)').eq('user_id', user.id).order('created_at', { ascending: false }),
+    supabase.from('wishlist').select('id, query, max_price_cents, card_catalog(title, player, set_name, year, parallel)').eq('user_id', user.id).order('created_at', { ascending: false }),
     supabase.from('service_requests').select('id, service, status, notes, grading_company, created_at, quoted_cents, currency').eq('user_id', user.id).order('created_at', { ascending: false }),
     supabase.from('listings').select('collection_item_id, status, id').eq('seller_id', user.id).in('status', ['active', 'reserved']),
   ]);
@@ -106,9 +106,6 @@ export default async function Collection({ searchParams }: { searchParams: Promi
                           Prodaj
                         </Link>
                       )}
-                      <Link href={`/usluge?t=grading`} className="btn btn-sm btn-ghost">
-                        Gradiraj
-                      </Link>
                       <form action={updateCollectionItem}>
                         <input type="hidden" name="id" value={i.id} />
                         <input type="hidden" name="open_to_trade" value={i.open_to_trade ? '0' : '1'} />
@@ -155,7 +152,7 @@ export default async function Collection({ searchParams }: { searchParams: Promi
               </div>
             ) : (
               <div className="alert alert-info">
-                Nemaš prijavljenih usluga. <Link href="/usluge" className="lnk">Gradiranje, sef, konsignacija i otkup →</Link>
+                Nemaš prijavljenih usluga. <Link href="/usluge" className="lnk">Sef, prodaja preko nas i otkup →</Link>
               </div>
             )}
           </section>
@@ -206,7 +203,7 @@ export default async function Collection({ searchParams }: { searchParams: Promi
                   return (
                     <div key={w.id} className="list-row" style={{ padding: '10px 0' }}>
                       <div className="stack" style={{ gap: 0, flex: 1 }}>
-                        <b style={{ fontSize: 14 }}>{c ? `${c.player}${c.parallel ? ' · ' + c.parallel : ''}` : w.query}</b>
+                        <b style={{ fontSize: 14 }}>{c ? c.title || `${c.player}${c.parallel ? ' · ' + c.parallel : ''}` : w.query}</b>
                         <span className="muted" style={{ fontSize: 12 }}>
                           {w.max_price_cents ? `Javi kad je ispod ${money(w.max_price_cents)}` : 'Javi kad se pojavi'}
                         </span>
@@ -227,6 +224,9 @@ export default async function Collection({ searchParams }: { searchParams: Promi
               </span>
             )}
             <WishForm compact />
+            <Link href="/lista-zelja" className="lnk" style={{ fontSize: 13 }}>
+              Cela lista želja →
+            </Link>
           </section>
         </aside>
       </div>

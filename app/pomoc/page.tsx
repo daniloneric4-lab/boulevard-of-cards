@@ -79,7 +79,7 @@ export default async function Help() {
                   <option value="order">Porudžbina</option>
                   <option value="draw">Izvlačenje</option>
                   <option value="auction">Aukcija</option>
-                  <option value="service">Gradiranje i sef</option>
+                  <option value="service">Usluge (sef, prodaja, otkup)</option>
                   <option value="dispute">Spor sa prodavcem</option>
                   <option value="other">Nešto drugo</option>
                 </select>

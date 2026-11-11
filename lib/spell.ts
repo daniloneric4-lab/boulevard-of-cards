@@ -115,6 +115,20 @@ export function autocorrect(text: string): string {
     .join('');
 }
 
+/** Isto kao card_norm u bazi: mala slova, bez kvačica, samo slova, brojevi i /. */
+export function cardNorm(t: string): string {
+  return strip(t || '')
+    .replace(/[^a-z0-9/]+/g, ' ')
+    .trim();
+}
+
+/** Da li upit sa liste želja odgovara naslovu (sve reči iz upita postoje u naslovu). */
+export function wishMatches(query: string, title: string): boolean {
+  const t = ' ' + cardNorm(title) + ' ';
+  const toks = cardNorm(query).split(' ').filter((x) => x.length >= 2);
+  return toks.length > 0 && toks.every((x) => t.includes(x));
+}
+
 /** Za pretragu: vraća ispravljen upit i da li je nešto promenjeno. */
 export function correctQuery(q?: string | null): { q: string; changed: boolean } {
   const orig = (q ?? '').trim();

@@ -66,7 +66,7 @@ export default async function Notifications({ searchParams }: { searchParams: Pr
                 <div className="stack" style={{ gap: 2, flex: 1 }}>
                   <b>{def.title}</b>
                   <span className="muted" style={{ fontSize: 13 }}>
-                    {[p.title, p.amount_cents ? money(Number(p.amount_cents)) : null, p.position ? `mesto ${p.position}` : null, p.tracking ? `praćenje ${p.tracking}` : null].filter(Boolean).join(' · ')}
+                    {[p.title, p.amount_cents ? money(Number(p.amount_cents)) : null, p.price_cents ? money(Number(p.price_cents), p.currency) : null, p.position ? `mesto ${p.position}` : null, p.tracking ? `praćenje ${p.tracking}` : null].filter(Boolean).join(' · ')}
                   </span>
                   <span className="mono muted" style={{ fontSize: 12 }}>
                     {date(n.created_at, true)}

@@ -5,7 +5,7 @@ import { date } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
-const TOPIC: Record<string, string> = { order: 'Porudžbina', draw: 'Izvlačenje', auction: 'Aukcija', service: 'Gradiranje i sef', dispute: 'Spor', other: 'Drugo' };
+const TOPIC: Record<string, string> = { order: 'Porudžbina', draw: 'Izvlačenje', auction: 'Aukcija', service: 'Usluge (sef, otkup)', dispute: 'Spor', other: 'Drugo' };
 
 export default async function AdminSupport() {
   const supabase = await createClient();

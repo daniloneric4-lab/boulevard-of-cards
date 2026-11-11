@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 
 const LINKS = [
   { href: '/prodavnica', label: 'Prodavnica' },
-  { href: '/katalog', label: 'Katalog' },
+  { href: '/lista-zelja', label: 'Lista želja' },
   { href: '/izvlacenja', label: 'Izvlačenja' },
   { href: '/aukcije', label: 'Aukcije' },
   { href: '/live', label: 'Live' },
