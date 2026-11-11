@@ -31,7 +31,7 @@ export async function getSessionInfo() {
   if (!user) return { supabase, user: null, profile: null, isAdmin: false };
   const { data: profile } = await supabase
     .from('profiles')
-    .select('id, username, display_name, city, role, is_suspended, is_verified, collects')
+    .select('id, username, display_name, city, role, is_suspended, is_verified, collects, avatar_url, bio')
     .eq('id', user.id)
     .single();
   const isAdmin = !!profile && profile.role === 'admin' && !profile.is_suspended && !!user.email_confirmed_at;
