@@ -4,8 +4,10 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
 const ERR: Record<string, string> = {
-  'Invalid login credentials': 'Pogrešna e-pošta ili lozinka.',
-  'Email not confirmed': 'Potvrdi e-poštu preko linka koji smo ti poslali.',
+  'Invalid login credentials': 'Pogrešna e-pošta ili lozinka. Ako ne možeš da se setiš lozinke, klikni „Zaboravljena lozinka“ i postavi novu.',
+  'Email not confirmed': 'Nalog još nije potvrđen. Otvori mejl koji smo ti poslali i klikni na link, pa se prijavi.',
+  'Email rate limit exceeded': 'Poslato je previše mejlova. Sačekaj nekoliko minuta pa pokušaj ponovo.',
+  'Password should be at least 6 characters.': 'Lozinka mora imati bar 8 znakova.',
   'User already registered': 'Nalog sa ovom e-poštom već postoji. Prijavi se.',
 };
 
@@ -13,6 +15,7 @@ export default function AuthForm({ next, initial = 'login' }: { next: string; in
   const [mode, setMode] = useState<'login' | 'signup' | 'reset'>(initial);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [showPw, setShowPw] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
@@ -38,16 +41,24 @@ export default function AuthForm({ next, initial = 'login' }: { next: string; in
         setBusy(false);
         return;
       }
+      if (password !== String(f.get('password2') || '')) {
+        setMsg({ ok: false, text: 'Lozinke se ne poklapaju. Upiši istu lozinku u oba polja.' });
+        setBusy(false);
+        return;
+      }
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: { emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`, data: { username, display_name: username } },
       });
       if (error) setMsg({ ok: false, text: ERR[error.message] ?? error.message });
-      else if (data.session) {
+      else if (data.user && (data.user.identities ?? []).length === 0) {
+        setMode('login');
+        setMsg({ ok: false, text: 'Nalog sa ovom e-poštom već postoji. Prijavi se lozinkom koju si tada upisao, ili klikni „Zaboravljena lozinka“.' });
+      } else if (data.session) {
         router.replace(next);
         router.refresh();
-      } else setMsg({ ok: true, text: 'Poslali smo ti mejl. Klikni na link u njemu da potvrdiš nalog, pa se prijavi.' });
+      } else setMsg({ ok: true, text: `Nalog je napravljen. Poslali smo mejl na ${email}: klikni na link u njemu da potvrdiš nalog, pa se prijavi ovde. Ako ne vidiš mejl, pogledaj i Spam.` });
     } else {
       const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${origin}/auth/callback?next=/profil/lozinka` });
       setMsg(error ? { ok: false, text: error.message } : { ok: true, text: 'Ako nalog postoji, poslali smo link za novu lozinku.' });
@@ -79,7 +90,18 @@ export default function AuthForm({ next, initial = 'login' }: { next: string; in
         {mode !== 'reset' ? (
           <label className="fld">
             Lozinka
-            <input className="inp" type="password" name="password" required minLength={mode === 'signup' ? 8 : 1} autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} />
+            <span className="row" style={{ flexWrap: 'nowrap', gap: 8 }}>
+              <input className="inp" type={showPw ? 'text' : 'password'} name="password" required minLength={mode === 'signup' ? 8 : 1} autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} />
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowPw((v) => !v)} aria-pressed={showPw}>
+                {showPw ? 'Sakrij' : 'Prikaži'}
+              </button>
+            </span>
+          </label>
+        ) : null}
+        {mode === 'signup' ? (
+          <label className="fld">
+            Ponovi lozinku
+            <input className="inp" type={showPw ? 'text' : 'password'} name="password2" required minLength={8} autoComplete="new-password" />
           </label>
         ) : null}
         {msg ? (
@@ -93,6 +115,10 @@ export default function AuthForm({ next, initial = 'login' }: { next: string; in
         {mode === 'login' ? (
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => setMode('reset')} style={{ alignSelf: 'flex-start' }}>
             Zaboravljena lozinka
+          </button>
+        ) : mode === 'reset' ? (
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setMode('login')} style={{ alignSelf: 'flex-start' }}>
+            Nazad na prijavu
           </button>
         ) : null}
       </form>

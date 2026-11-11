@@ -35,7 +35,7 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
         </ul>
       </div>
       <div className="stack" style={{ gap: 16 }}>
-        {greska ? <div className="alert alert-err">Link za potvrdu nije važeći ili je istekao. Prijavi se ponovo.</div> : null}
+        {greska ? <div className="alert alert-err">Link iz mejla je već iskorišćen ili je istekao. Ako si već kliknuo na njega, nalog je potvrđen i samo se prijavi ovde.</div> : null}
         <AuthForm next={dest} initial={mode === 'signup' ? 'signup' : 'login'} />
       </div>
     </div>
