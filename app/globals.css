@@ -66,6 +66,28 @@ p { margin: 0; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 label.fld { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; }
 .inp, select.inp, textarea.inp { min-height: 44px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--bc-line); background: var(--bc-white); font: 400 15px var(--font-body); color: var(--bc-carbon); width: 100%; }
+
+/* padajuće liste u stilu sajta */
+select.inp { appearance: none; -webkit-appearance: none; cursor: pointer; padding-right: 38px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%2315151e' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; transition: border-color .15s ease, box-shadow .15s ease; }
+select.inp:hover { border-color: var(--bc-gray); }
+select.inp:focus-visible { outline: none; border-color: var(--bc-carbon); box-shadow: 0 0 0 3px rgba(225,6,0,.15); }
+/* Chrome i Edge: i otvorena lista dobija izgled sajta (ostali pregledači prikazuju svoju listu) */
+@supports (appearance: base-select) {
+  select.inp, select.inp::picker(select) { appearance: base-select; }
+  select.inp { display: flex; align-items: center; background-image: none; padding-right: 12px; }
+  select.inp::picker-icon { content: ''; width: 8px; height: 8px; margin-left: auto; border-right: 2px solid var(--bc-carbon); border-bottom: 2px solid var(--bc-carbon); transform: translateY(-2px) rotate(45deg); transition: transform .2s ease; }
+  select.inp:open::picker-icon { transform: translateY(2px) rotate(225deg); }
+  select.inp:open { border-color: var(--bc-carbon); box-shadow: 0 0 0 3px rgba(225,6,0,.15); }
+  select.inp::picker(select) { border: 1px solid var(--bc-line); border-radius: 14px; padding: 6px; margin-top: 6px; background: #fff; box-shadow: 0 22px 50px rgba(21,21,30,.18); max-height: 320px; overflow-y: auto; opacity: 0; transform: translateY(-4px); transition: opacity .15s ease, transform .15s ease, display .15s allow-discrete, overlay .15s allow-discrete; }
+  select.inp:open::picker(select) { opacity: 1; transform: none; }
+  @starting-style { select.inp:open::picker(select) { opacity: 0; transform: translateY(-4px); } }
+  select.inp option { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 8px 12px; border-radius: 10px; font: 500 14px var(--font-body); color: var(--bc-carbon); cursor: pointer; transition: background .12s ease; }
+  select.inp option:hover, select.inp option:focus-visible { background: var(--bc-surface); outline: none; }
+  select.inp option:checked { background: var(--bc-carbon); color: #fff; font-weight: 600; }
+  select.inp option::checkmark { content: '\2713'; order: 2; margin-left: auto; color: var(--bc-red); font-weight: 700; }
+  select.inp option:disabled { color: var(--bc-gray); cursor: not-allowed; }
+}
+@media (prefers-reduced-motion: reduce) { select.inp::picker(select) { transition: none; } }
 textarea.inp { min-height: 96px; resize: vertical; }
 .inp:focus { outline: 2px solid var(--bc-carbon); outline-offset: 1px; }
 .chk { display: flex; align-items: center; gap: 8px; font-size: 14px; }
