@@ -26,7 +26,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
   const [{ data: releases }, { data: auctions }, { data: draws }, { data: lives }, { data: top }] = await Promise.all([
     supabase
       .from('releases')
-      .select('id, name, sport, box_format, release_date, sale_type, us_price_cents')
+      .select('id, name, sport, box_format, release_date, sale_type, us_price_cents, draws(id, status, closes_at)')
       .eq('is_visible', true)
       .gte('release_date', today)
       .order('release_date', { ascending: true })
@@ -211,7 +211,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
           <div className="cal">
             {releases.map((r) => {
               const d = r.release_date ? new Date(r.release_date + 'T12:00:00') : null;
-              const cta = r.sale_type === 'draw' ? ['Izvlačenje', '/izvlacenja'] : r.sale_type === 'preorder' ? ['Preorder', `/prodavnica?q=${encodeURIComponent(r.name)}`] : r.sale_type === 'order' ? ['Poruči', `/prodavnica?q=${encodeURIComponent(r.name)}`] : ['Javi mi', '/podesavanja#obavestenja'];
+              // izdanje za izvlačenje vodi pravo na svoje izvlačenje na sajtu
+              const dr = ((r.draws ?? []) as { id: string; status: string; closes_at: string }[]).find((x) => ['scheduled', 'open', 'closed', 'drawn'].includes(x.status));
+              const cta = r.sale_type === 'draw' ? [dr?.status === 'open' ? 'Prijavi se' : 'Izvlačenje', dr ? `/izvlacenja/${dr.id}` : '/izvlacenja'] : r.sale_type === 'preorder' ? ['Preorder', `/prodavnica?q=${encodeURIComponent(r.name)}`] : r.sale_type === 'order' ? ['Poruči', `/prodavnica?q=${encodeURIComponent(r.name)}`] : ['Javi mi', '/podesavanja#obavestenja'];
               return (
                 <Link key={r.id} href={cta[1]} className="cal-item">
                   <span className="cal-date">
@@ -224,7 +226,11 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
                       {r.box_format ? ` · ${r.box_format}` : ''}
                     </span>
                     <b style={{ fontSize: 15, lineHeight: 1.3 }}>{r.name}</b>
-                    {r.us_price_cents ? <span className="mono muted" style={{ fontSize: 12 }}>U SAD {money(r.us_price_cents, 'USD')}</span> : null}
+                    {r.sale_type === 'draw' && dr?.status === 'open' ? (
+                      <span className="mono" style={{ fontSize: 12, color: 'var(--bc-red)' }}>Prijave do {new Date(dr.closes_at).toLocaleDateString('sr-Latn-RS', { day: 'numeric', month: 'short' })}</span>
+                    ) : r.us_price_cents ? (
+                      <span className="mono muted" style={{ fontSize: 12 }}>U SAD {money(r.us_price_cents, 'USD')}</span>
+                    ) : null}
                   </span>
                   <span className={'btn btn-sm ' + (r.sale_type === 'draw' ? 'btn-red' : 'btn-dark')}>{cta[0]}</span>
                 </Link>
