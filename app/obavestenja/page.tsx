@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { requireUser } from '@/lib/auth';
 import SubmitButton from '@/components/SubmitButton';
-import { markAllRead, markRead } from '@/app/_act/market';
+import { clearNotifications, deleteNotification, markAllRead, markRead } from '@/app/_act/market';
 import { NOTIF, date, money } from '@/lib/format';
 
 export const metadata: Metadata = { title: 'Obaveštenja' };
@@ -32,11 +32,32 @@ export default async function Notifications({ searchParams }: { searchParams: Pr
           <span className="kicker">{unread ? `${unread} nepročitanih` : 'Sve je pročitano'}</span>
           <h1 style={{ fontSize: 'clamp(30px,4vw,48px)' }}>Obaveštenja</h1>
         </div>
-        {unread ? (
-          <form action={markAllRead}>
-            <SubmitButton className="btn btn-ghost">Označi sve kao pročitano</SubmitButton>
-          </form>
-        ) : null}
+        <div className="row" style={{ gap: 8 }}>
+          {unread ? (
+            <form action={markAllRead}>
+              <SubmitButton className="btn btn-ghost">Označi sve kao pročitano</SubmitButton>
+            </form>
+          ) : null}
+          {list.some((n) => n.read_at) ? (
+            <form action={clearNotifications}>
+              <input type="hidden" name="mode" value="read" />
+              <SubmitButton className="btn btn-ghost" pendingText="Brišem…">
+                Obriši pročitana
+              </SubmitButton>
+            </form>
+          ) : null}
+          {list.length ? (
+            <details className="del-confirm">
+              <summary className="btn btn-ghost">Obriši sva</summary>
+              <form action={clearNotifications}>
+                <input type="hidden" name="mode" value="all" />
+                <SubmitButton className="btn btn-red btn-sm" pendingText="Brišem…">
+                  Da, obriši sva obaveštenja
+                </SubmitButton>
+              </form>
+            </details>
+          ) : null}
+        </div>
       </div>
       <div className="chips">
         {[
@@ -82,6 +103,12 @@ export default async function Notifications({ searchParams }: { searchParams: Pr
                   <input type="hidden" name="unread" value={n.read_at ? '1' : '0'} />
                   <button className="btn btn-sm btn-ghost" aria-label={n.read_at ? 'Označi kao nepročitano' : 'Označi kao pročitano'}>
                     {n.read_at ? '○' : '✓'}
+                  </button>
+                </form>
+                <form action={deleteNotification}>
+                  <input type="hidden" name="id" value={n.id} />
+                  <button className="btn btn-sm btn-ghost" aria-label={`Obriši obaveštenje: ${def.title}`} title="Obriši">
+                    🗑
                   </button>
                 </form>
               </div>

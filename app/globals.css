@@ -200,6 +200,10 @@ a.lnk:hover { text-decoration: underline; }
 .stat-t { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
 .stat-tile b { font-family: var(--font-display); font-size: 26px; }
 .umenu-out { width: 100%; background: none; border: 0; cursor: pointer; font: 500 14px var(--font-body); color: var(--bc-carbon); }
+.del-confirm { position: relative; }
+.del-confirm summary { list-style: none; cursor: pointer; }
+.del-confirm summary::-webkit-details-marker { display: none; }
+.del-confirm[open] > form { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; background: #fff; border-radius: 12px; padding: 12px; box-shadow: 0 16px 40px rgba(0,0,0,.18); width: 260px; }
 .progress { height: 10px; border-radius: 999px; background: var(--bc-line); overflow: hidden; }
 .progress span { display: block; height: 100%; background: var(--bc-red); border-radius: 999px; transition: width .4s ease; }
 .ftr-legal { max-width: 1280px; margin: 0 auto; padding: 16px 24px 28px; border-top: 1px solid var(--bc-line-dk); display: flex; flex-wrap: wrap; gap: 6px 24px; justify-content: space-between; font-size: 12px; line-height: 1.5; }

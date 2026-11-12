@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { requireUser } from '@/lib/auth';
 import Avatar from '@/components/Avatar';
 import SubmitButton from '@/components/SubmitButton';
-import { respondOffer, respondTrade } from '@/app/_act/market';
+import { clearConversation, respondOffer, respondTrade } from '@/app/_act/market';
 import { date, money } from '@/lib/format';
 import Composer from './Composer';
 
@@ -16,7 +16,7 @@ export default async function Conversation({ params }: { params: Promise<{ id: s
   const { supabase, user } = await requireUser(`/poruke/${id}`);
   const { data: c } = await supabase
     .from('conversations')
-    .select('id, buyer_id, seller_id, listing_id, buyer:profiles!conversations_buyer_id_fkey(id, username, avatar_url, is_verified), seller:profiles!conversations_seller_id_fkey(id, username, avatar_url, is_verified), listings(id, title, price_cents, currency, status)')
+    .select('id, buyer_id, seller_id, listing_id, buyer_cleared_at, seller_cleared_at, buyer:profiles!conversations_buyer_id_fkey(id, username, avatar_url, is_verified), seller:profiles!conversations_seller_id_fkey(id, username, avatar_url, is_verified), listings(id, title, price_cents, currency, status)')
     .eq('id', id)
     .maybeSingle();
   if (!c) notFound();
@@ -25,7 +25,13 @@ export default async function Conversation({ params }: { params: Promise<{ id: s
   const other = (Array.isArray(otherRaw) ? otherRaw[0] : otherRaw) as { id: string; username: string; avatar_url: string | null; is_verified: boolean };
   const li = Array.isArray(c.listings) ? c.listings[0] : c.listings;
   const [{ data: msgs }, { data: offers }, { data: trades }, { data: mine }, { data: theirs }] = await Promise.all([
-    supabase.from('messages').select('id, sender_id, kind, body, offer_id, trade_id, flagged, created_at').eq('conversation_id', id).order('created_at'),
+    // posle brisanja kod sebe vidiš samo nove poruke
+    (() => {
+      const cleared = c.buyer_id === user.id ? c.buyer_cleared_at : c.seller_cleared_at;
+      let mq = supabase.from('messages').select('id, sender_id, kind, body, offer_id, trade_id, flagged, created_at').eq('conversation_id', id).order('created_at');
+      if (cleared) mq = mq.gt('created_at', cleared);
+      return mq;
+    })(),
     supabase.from('offers').select('*').eq('conversation_id', id),
     supabase.from('trades').select('*, trade_items(side, collection_items(title))').eq('conversation_id', id),
     supabase.from('collection_items').select('id, title').eq('owner_id', user.id).limit(60),
@@ -52,6 +58,16 @@ export default async function Conversation({ params }: { params: Promise<{ id: s
             </span>
           ) : null}
         </div>
+        <details className="del-confirm">
+          <summary className="btn btn-sm btn-ghost">Obriši razgovor</summary>
+          <form action={clearConversation} className="stack" style={{ gap: 6 }}>
+            <input type="hidden" name="id" value={c.id} />
+            <span className="muted" style={{ fontSize: 12 }}>Briše se samo kod tebe. @{other.username} i dalje vidi poruke.</span>
+            <SubmitButton className="btn btn-red btn-sm" pendingText="Brišem…">
+              Da, obriši kod mene
+            </SubmitButton>
+          </form>
+        </details>
       </div>
 
       <div className="msg-box" aria-live="polite">

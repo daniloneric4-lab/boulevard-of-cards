@@ -495,6 +495,25 @@ export async function markAllRead() {
   await supabase.from('notifications').update({ read_at: new Date().toISOString() }).eq('user_id', user.id).is('read_at', null);
   revalidatePath('/', 'layout');
 }
+export async function deleteNotification(form: FormData) {
+  const { supabase, user } = await mustUser('/obavestenja');
+  await supabase.from('notifications').delete().eq('id', s(form, 'id')).eq('user_id', user.id);
+  revalidatePath('/', 'layout');
+}
+export async function clearNotifications(form: FormData) {
+  const { supabase, user } = await mustUser('/obavestenja');
+  let q = supabase.from('notifications').delete().eq('user_id', user.id);
+  if (s(form, 'mode') !== 'all') q = q.not('read_at', 'is', null);
+  await q;
+  revalidatePath('/', 'layout');
+}
+export async function clearConversation(form: FormData) {
+  const id = s(form, 'id');
+  const { supabase } = await mustUser('/poruke');
+  await supabase.rpc('clear_conversation', { p_conversation_id: id });
+  revalidatePath('/', 'layout');
+  redirect('/poruke?obrisano=1');
+}
 export async function markRead(form: FormData) {
   const { supabase } = await mustUser('/obavestenja');
   await supabase.from('notifications').update({ read_at: form.get('unread') === '1' ? null : new Date().toISOString() }).eq('id', s(form, 'id'));
