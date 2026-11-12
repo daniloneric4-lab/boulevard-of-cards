@@ -1,6 +1,6 @@
 import { artFor } from './CardArt';
 
-// Kutija na istoj tamnoj pozadini kao kartice: prava slika kutije ili generisana kutija (bez logotipa).
+// Kutija u istom okviru kao kartica: beli okvir sa natpisom, unutra slika kutije na tamnoj pozadini.
 export default function BoxArt({
   seed,
   name = 'TOPPS',
@@ -16,25 +16,25 @@ export default function BoxArt({
   size?: 'sm' | 'md' | 'lg';
   label?: string;
 }) {
-  const w = size === 'lg' ? 280 : size === 'sm' ? 92 : 132;
+  const w = size === 'lg' ? 300 : size === 'sm' ? 100 : 150;
   return (
     <div className={'slab-stage slab-' + size} aria-hidden={label ? undefined : 'true'} role={label ? 'img' : undefined} aria-label={label}>
-      <div className="box3d" style={{ width: w, height: Math.round(w * 1.12) }}>
-        {image ? (
-          <div className="box3d-front box3d-photo">
+      <div className="slab box-slab" style={{ width: w, height: Math.round(w * 1.18) }}>
+        <div className="slab-top">
+          <span>TOPPS</span>
+          <b>BOX</b>
+        </div>
+        <div className="slab-art box-art" style={{ background: image ? '#0d0d12' : artFor(seed + 'box') }}>
+          {image ? (
             <img src={image} alt="" />
-            <div className="boc-shine" />
-          </div>
-        ) : (
-          <div className="box3d-front" style={{ background: artFor(seed + 'box') }}>
-            <span className="box3d-brand">TOPPS</span>
-            <span className="box3d-name">{name}</span>
-            <span className="box3d-format">{format}</span>
-            <div className="boc-shine" />
-          </div>
-        )}
-        <div className="box3d-side" />
-        <div className="box3d-top" />
+          ) : (
+            <span className="box-gen">
+              <b>{name}</b>
+              <small>{format}</small>
+            </span>
+          )}
+          <div className="boc-shine" />
+        </div>
       </div>
     </div>
   );

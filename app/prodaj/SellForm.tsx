@@ -5,6 +5,7 @@ import CardCropper from '@/components/CardCropper';
 import { createListing } from '@/app/_act/market';
 import { SPORTS } from '@/lib/format';
 import CardArt from '@/components/CardArt';
+import BoxArt from '@/components/BoxArt';
 import { FixNote } from '@/components/AutoFixInput';
 import { autocorrect } from '@/lib/spell';
 
@@ -17,6 +18,23 @@ const MODES: [string, string, string][] = [
 ];
 
 const MAX_RSD = 20_000_000;
+
+// ponuđena stanja (biraju se iz padajuće liste)
+const CARD_STATES = [
+  'Iz paketa pravo u zaštitu (Pack fresh)',
+  'Kao nova (Mint), bez vidljivih tragova',
+  'Odlična (Near Mint), sitni tragovi tek izbliza',
+  'Vrlo dobra (Excellent), blago izlizani ćoškovi ili ivice',
+  'Dobra (Very Good), vidljivi tragovi korišćenja',
+  'Oštećena (pregib, ogrebotina ili mrlja)',
+];
+const BOX_STATES = [
+  'Fabrički zatvorena, u originalnoj foliji',
+  'Zatvorena, bez folije',
+  'Zatvorena, oštećena folija ili ambalaža',
+  'Otvorena, svi paketi zatvoreni (kompletna)',
+  'Otvorena, nekompletna',
+];
 
 // smanji sliku pre slanja (najviše 1600 px, JPEG), da otpremanje bude brzo i pouzdano
 async function shrink(file: File): Promise<Blob> {
@@ -156,7 +174,6 @@ export default function SellForm({ initialTitle = '', initialSport = 'football',
               <select className="inp" name="kind" value={kind} onChange={(e) => setKind(e.target.value)}>
                 <option value="card">Kartica</option>
                 <option value="sealed_box">Zatvorena kutija</option>
-                <option value="supply">Oprema (folije, top loaderi…)</option>
               </select>
             </label>
             <label className="fld" style={{ flex: '1 1 160px' }}>
@@ -171,7 +188,7 @@ export default function SellForm({ initialTitle = '', initialSport = 'football',
             </label>
             {kind === 'card' ? (
             <label className="fld" style={{ flex: '1 1 140px' }}>
-              Stanje
+              Gradiranje
               <select className="inp" name="grader" value={grader} onChange={(e) => setGrader(e.target.value)}>
                 <option value="raw">RAW (bez ocene)</option>
                 <option value="psa">PSA</option>
@@ -183,8 +200,12 @@ export default function SellForm({ initialTitle = '', initialSport = 'football',
             ) : null}
             {kind !== 'card' ? (
               <label className="fld" style={{ flex: '1 1 200px' }}>
-                {kind === 'supply' ? 'Stanje (novo, korišćeno…)' : 'Stanje kutije'}
-                <input className="inp" name="condition" placeholder="npr. fabrički zatvorena, folija netaknuta" />
+                Stanje kutije
+                <select className="inp" name="condition" defaultValue="Fabrički zatvorena, u originalnoj foliji">
+                  {BOX_STATES.map((x) => (
+                    <option key={x}>{x}</option>
+                  ))}
+                </select>
               </label>
             ) : grader !== 'raw' ? (
               <>
@@ -199,8 +220,12 @@ export default function SellForm({ initialTitle = '', initialSport = 'football',
               </>
             ) : (
               <label className="fld" style={{ flex: '1 1 200px' }}>
-                Opis stanja
-                <input className="inp" name="condition" placeholder="npr. odlične ivice, iz paketa u toploader" />
+                Stanje kartice
+                <select className="inp" name="condition" defaultValue="Iz paketa pravo u zaštitu (Pack fresh)">
+                  {CARD_STATES.map((x) => (
+                    <option key={x}>{x}</option>
+                  ))}
+                </select>
               </label>
             )}
           </div>
@@ -264,7 +289,7 @@ export default function SellForm({ initialTitle = '', initialSport = 'football',
       <aside className="stack" style={{ position: 'sticky', top: 90 }}>
         <span className="kicker">Pregled oglasa</span>
         <div className="tile">
-          <CardArt seed={title || 'novi'} grade={gl} image={preview} />
+          {kind === 'sealed_box' ? <BoxArt seed={title || 'novi'} image={preview} /> : <CardArt seed={title || 'novi'} grade={gl} image={preview} />}
           <div className="tile-body">
             <span className="tile-title">{title || 'Naziv kartice'}</span>
             <span className="muted" style={{ fontSize: 13 }}>
