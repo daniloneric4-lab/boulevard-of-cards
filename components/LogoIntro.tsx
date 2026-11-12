@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 
+// Animirani logo se pusti jednom i ostane na poslednjem kadru.
 // Animirani logo: WEBM sa providnom pozadinom; Safari ne podrzava providni VP9, pa dobija MP4 sa "screen" mesanjem.
 export default function LogoIntro() {
   const [webm, setWebm] = useState(true);
@@ -17,7 +18,6 @@ export default function LogoIntro() {
       src={webm ? '/logo-intro.webm' : '/logo-intro.mp4'}
       autoPlay
       muted
-      loop
       playsInline
       preload="auto"
       aria-hidden="true"

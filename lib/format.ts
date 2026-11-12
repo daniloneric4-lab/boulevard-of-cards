@@ -154,6 +154,7 @@ export const NOTIF: Record<string, { title: string; href?: (p: Record<string, st
   draw_waitlist: { title: 'Na rezervnoj si listi izvlačenja', href: (p) => `/izvlacenja/${p.draw_id}` },
   message: { title: 'Nova poruka', href: (p) => `/poruke/${p.conversation_id}` },
   service_status: { title: 'Promena statusa usluge', href: (p) => (p.service === 'grading' ? '/usluge?t=grading' : '/kolekcija') },
+  wish_sold: { title: 'Kartica sa tvoje liste želja je upravo kupljena', href: () => '/lista-zelja' },
   listing_watched: { title: 'Neko prati tvoj oglas', href: (p) => `/oglas/${p.listing_id}` },
   new_bid: { title: 'Nova ponuda na tvojoj aukciji', href: (p) => `/oglas/${p.listing_id}` },
   wish_match: { title: 'Kartica sa tvoje liste želja je na sajtu', href: (p) => `/oglas/${p.listing_id}` },
