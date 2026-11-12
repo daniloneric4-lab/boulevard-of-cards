@@ -1,6 +1,7 @@
 'use client';
 import { useActionState, useState, useTransition } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import CardCropper from '@/components/CardCropper';
 import { createListing } from '@/app/_act/market';
 import { SPORTS } from '@/lib/format';
 import CardArt from '@/components/CardArt';
@@ -47,6 +48,18 @@ export default function SellForm({ initialTitle = '', initialSport = 'football',
   const [grade, setGrade] = useState('10');
   const [price, setPrice] = useState('');
   const [preview, setPreview] = useState<string | null>(null);
+  const [cropFile, setCropFile] = useState<File | null>(null);
+  const upload = async (blob: Blob) => {
+    setUpState('busy');
+    setImgPath('');
+    const path = `${userId}/${crypto.randomUUID()}.jpg`;
+    const { error } = await createClient().storage.from('listing-images').upload(path, blob, { contentType: 'image/jpeg' });
+    if (error) setUpState('err');
+    else {
+      setImgPath(path);
+      setUpState('ok');
+    }
+  };
   const gl = kind === 'supply' ? 'OPREMA' : kind === 'sealed_box' ? 'BOX' : grader === 'raw' ? 'RAW' : `${grader.toUpperCase()} ${grade}`;
 
   return (
@@ -58,6 +71,7 @@ export default function SellForm({ initialTitle = '', initialSport = 'football',
           // ne koristimo action={run} da se forma ne bi obrisala ako nešto ne prođe
           e.preventDefault();
           setLocalErr('');
+          if (cropFile) return setLocalErr('Prvo iseci karticu ili izaberi „Koristi celu sliku”.');
           if (upState === 'busy') return setLocalErr('Slika se još šalje, sačekaj sekund.');
           if (!imgPath) return setLocalErr('Dodaj sliku kartice. Oglas bez slike ne može da se objavi.');
           const n = Number(price.replace(/\s/g, '').replace(',', '.'));
@@ -80,24 +94,35 @@ export default function SellForm({ initialTitle = '', initialSport = 'football',
               type="file"
               accept="image/*"
               capture="environment"
-              onChange={async (e) => {
+              onChange={(e) => {
                 const f = e.target.files?.[0];
                 if (!f) return;
+                // prvo isecanje kartice sa slike, pa tek onda slanje
                 setPreview(URL.createObjectURL(f));
-                setUpState('busy');
                 setImgPath('');
-                const blob = await shrink(f);
-                const path = `${userId}/${crypto.randomUUID()}.jpg`;
-                const { error } = await createClient().storage.from('listing-images').upload(path, blob, { contentType: 'image/jpeg' });
-                if (error) {
-                  setUpState('err');
-                } else {
-                  setImgPath(path);
-                  setUpState('ok');
-                }
+                setUpState('');
+                setCropFile(f);
+                e.target.value = '';
               }}
             />
           </label>
+          {cropFile ? (
+            <CardCropper
+              key={cropFile.name + cropFile.size + cropFile.lastModified}
+              file={cropFile}
+              defaultRatio={kind === 'card' ? (grader === 'raw' ? 'card' : 'slab') : 'free'}
+              onDone={(blob, url) => {
+                setPreview(url);
+                setCropFile(null);
+                upload(blob);
+              }}
+              onSkip={async () => {
+                const f = cropFile;
+                setCropFile(null);
+                upload(await shrink(f));
+              }}
+            />
+          ) : null}
           {upState === 'busy' ? <span className="muted" style={{ fontSize: 13 }}>Šaljem sliku…</span> : null}
           {upState === 'ok' ? <span style={{ fontSize: 13, color: 'var(--bc-green)' }}>✓ Slika je spremna</span> : null}
           {upState === 'err' ? (

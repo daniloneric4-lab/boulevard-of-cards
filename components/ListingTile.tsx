@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import AdminBadge from './AdminBadge';
 import CardArt from './CardArt';
+import BoxArt from './BoxArt';
 import { gradeLabel, listingImage, money, sportLabel, timeLeft, LISTING_MODE } from '@/lib/format';
 import { one, type ListingRow } from '@/lib/listings';
 
@@ -14,7 +15,11 @@ export default function ListingTile({ l }: { l: ListingRow }) {
   return (
     <article className="tile">
       <Link href={`/oglas/${l.id}`} className="tile-media" aria-label={l.title} style={{ textDecoration: 'none' }}>
-        <CardArt seed={l.id} grade={gradeLabel(ci?.grader, ci?.grade)} image={listingImage(img?.storage_path)} />
+        {l.kind === 'sealed_box' || l.kind === 'supply' ? (
+          <BoxArt seed={l.id} image={listingImage(img?.storage_path)} />
+        ) : (
+          <CardArt seed={l.id} grade={gradeLabel(ci?.grader, ci?.grade)} image={listingImage(img?.storage_path)} />
+        )}
         <span className="tile-tag">{sportLabel(l.sport)}</span>
         {a && !sold ? <span className="tile-time">{timeLeft(a.ends_at)}</span> : null}
         {sold ? <span className="tile-time" style={{ background: 'var(--bc-gray)' }}>{l.status === 'sold' ? 'Prodato' : l.status === 'reserved' ? 'Rezervisano' : 'Završeno'}</span> : null}

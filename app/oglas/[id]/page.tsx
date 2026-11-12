@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getSessionInfo } from '@/lib/supabase/server';
 import FlipCard from '@/components/FlipCard';
+import BoxArt from '@/components/BoxArt';
 import Countdown from '@/components/Countdown';
 import Avatar from '@/components/Avatar';
 import SubmitButton from '@/components/SubmitButton';
@@ -104,6 +105,9 @@ export default async function ListingPage({ params, searchParams }: { params: Pr
       </div>
       <div className="two">
         <div className="stack">
+          {l.kind === 'sealed_box' || l.kind === 'supply' ? (
+            <BoxArt seed={l.id} image={listingImage(imgs[0]?.storage_path)} size="lg" label={l.title} />
+          ) : (
           <FlipCard
             seed={l.id}
             grade={gradeLabel(ci?.grader, ci?.grade)}
@@ -117,6 +121,7 @@ export default async function ListingPage({ params, searchParams }: { params: Pr
               { label: 'Objavljeno', value: date(l.created_at) },
             ]}
           />
+          )}
           {imgs.length > 1 ? (
             <div className="row">
               {imgs.slice(1).map((im) => (

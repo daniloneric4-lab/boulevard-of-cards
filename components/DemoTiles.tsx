@@ -1,21 +1,44 @@
 import Link from 'next/link';
 import CardArt from './CardArt';
-import { DEMO_CARDS } from '@/lib/demo';
+import BoxArt from './BoxArt';
+import { DEMO_BOXES, DEMO_CARDS } from '@/lib/demo';
 import { sportLabel } from '@/lib/format';
 
-export default function DemoTiles({ sport, count = 4, mode, cta = 'Postavi svoju', href = '/prodaj' }: { sport?: string; count?: number; mode?: string; cta?: string; href?: string }) {
-  let list = DEMO_CARDS.filter((d) => (!sport || d.sport === sport) && (!mode || d.mode === mode));
-  if (list.length < count) list = [...list, ...DEMO_CARDS.filter((d) => !list.includes(d))];
+type Demo = { id: string; title: string; sport: string; mode: string; grade?: string; name?: string; format?: string; box?: boolean };
+
+export default function DemoTiles({
+  sport,
+  count = 4,
+  mode,
+  cta = 'Postavi svoju',
+  href = '/prodaj',
+  kind = 'all',
+}: {
+  sport?: string;
+  count?: number;
+  mode?: string;
+  cta?: string;
+  href?: string;
+  /** 'cards' samo kartice, 'boxes' samo kutije, 'all' i jedno i drugo */
+  kind?: 'cards' | 'boxes' | 'all';
+}) {
+  const pick = (src: Demo[], n: number) => {
+    let list = src.filter((d) => (!sport || d.sport === sport) && (!mode || d.mode === mode));
+    if (list.length < n) list = [...list, ...src.filter((d) => !list.includes(d))];
+    return list.slice(0, n);
+  };
+  const cards = kind === 'boxes' ? [] : pick(DEMO_CARDS, count);
+  const boxes = kind === 'cards' ? [] : pick(DEMO_BOXES.map((b) => ({ ...b, box: true })), count);
   return (
     <div className="stack">
       <span className="muted" style={{ fontSize: 13 }}>
         Još nema pravih oglasa, ovako će izgledati. Primeri nisu na prodaju.
       </span>
       <div className="grid-tiles">
-        {list.slice(0, count).map((d) => (
+        {[...cards, ...boxes].map((d: Demo) => (
           <article key={d.id} className="tile" style={{ opacity: 0.92 }}>
             <div className="tile-media">
-              <CardArt seed={d.id} grade={d.grade} />
+              {d.box ? <BoxArt seed={d.id} name={d.name} format={d.format} /> : <CardArt seed={d.id} grade={d.grade} />}
               <span className="tile-tag">{sportLabel(d.sport)}</span>
               <span className="demo-tag">PRIMER</span>
             </div>

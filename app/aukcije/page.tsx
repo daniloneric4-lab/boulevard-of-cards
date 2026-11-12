@@ -65,7 +65,7 @@ export default async function Auctions({ searchParams }: { searchParams: Promise
             <Link href={qs({ sport: undefined })} className={'chip' + (!sport ? ' on' : '')}>
               Sve
             </Link>
-            {SPORTS.filter((s) => s.key !== 'other').map((s) => (
+            {SPORTS.map((s) => (
               <Link key={s.key} href={qs({ sport: s.key })} className={'chip' + (sport === s.key ? ' on' : '')}>
                 {s.label}
               </Link>

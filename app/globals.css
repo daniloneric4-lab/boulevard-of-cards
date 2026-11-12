@@ -200,6 +200,24 @@ a.lnk:hover { text-decoration: underline; }
 .stat-t { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
 .stat-tile b { font-family: var(--font-display); font-size: 26px; }
 .umenu-out { width: 100%; background: none; border: 0; cursor: pointer; font: 500 14px var(--font-body); color: var(--bc-carbon); }
+.cropper-box { position: relative; width: 100%; max-height: 70vh; background: var(--bc-carbon); border-radius: 12px; overflow: hidden; touch-action: none; user-select: none; }
+.cropper-box img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+.cropper-box svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.cropper-dot { position: absolute; width: 28px; height: 28px; margin: -14px 0 0 -14px; border-radius: 50%; background: #fff; border: 3px solid var(--bc-red); box-shadow: 0 2px 8px rgba(0,0,0,.4); cursor: grab; touch-action: none; padding: 0; }
+.cropper-dot:active { cursor: grabbing; transform: scale(1.15); }
+.box3d { position: relative; transform: perspective(700px) rotateY(-14deg); transform-style: preserve-3d; filter: drop-shadow(0 18px 30px rgba(0,0,0,.5)); }
+.box3d-front { position: absolute; inset: 0; border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; padding: 10% 9%; color: #fff; border: 1px solid rgba(255,255,255,.18); }
+.box3d-photo { padding: 0; background: #fff; }
+.box3d-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.box3d-side { position: absolute; top: 0; right: -14%; width: 14%; height: 100%; background: linear-gradient(90deg, rgba(0,0,0,.55), rgba(0,0,0,.8)), var(--bc-carbon); transform-origin: left; transform: skewY(-28deg); border-radius: 0 4px 4px 0; }
+.box3d-top { position: absolute; top: -6%; left: 0; width: 100%; height: 6%; background: rgba(255,255,255,.22); transform-origin: bottom; transform: skewX(-50deg); transform: translateX(7%) skewX(-60deg); border-radius: 4px 4px 0 0; }
+.box3d-brand { position: absolute; top: 9%; left: 9%; font: 700 9px var(--font-mono); letter-spacing: .2em; padding: 3px 6px; background: rgba(255,255,255,.92); color: var(--bc-carbon); border-radius: 3px; }
+.box3d-name { font: 800 clamp(13px, 1.6vw, 17px)/1 var(--font-display); letter-spacing: -.01em; text-shadow: 0 2px 10px rgba(0,0,0,.4); }
+.box3d-format { font: 600 9px var(--font-mono); letter-spacing: .14em; color: rgba(255,255,255,.8); border-top: 2px solid var(--bc-red); padding-top: 5px; align-self: flex-start; }
+.slab-sm .box3d-name { font-size: 10px; }
+.slab-lg .box3d-name { font-size: 28px; }
+.slab-lg .box3d-brand { font-size: 12px; }
+@media (prefers-reduced-motion: reduce) { .box3d { transform: none; } }
 .admin-badge { display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: 5px; background: var(--bc-red); color: #fff; font: 700 10px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; vertical-align: middle; margin-left: 4px; }
 .read-box { width: 26px; height: 26px; border-radius: 7px; border: 2px solid var(--bc-gray); background: #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; flex: none; }
 .read-box:hover { border-color: var(--bc-carbon); }
