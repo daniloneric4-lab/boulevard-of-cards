@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { requireUser } from '@/lib/auth';
 import SubmitButton from '@/components/SubmitButton';
+import TrashIcon from '@/components/TrashIcon';
 import { clearNotifications, deleteNotification, markAllRead, markRead } from '@/app/_act/market';
 import { NOTIF, date, money } from '@/lib/format';
 
@@ -35,7 +36,7 @@ export default async function Notifications({ searchParams }: { searchParams: Pr
         <div className="row" style={{ gap: 8 }}>
           {unread ? (
             <form action={markAllRead}>
-              <SubmitButton className="btn btn-ghost">Označi sve kao pročitano</SubmitButton>
+              <SubmitButton className="btn btn-dark" pendingText="…">Pročitaj sve</SubmitButton>
             </form>
           ) : null}
           {list.some((n) => n.read_at) ? (
@@ -98,17 +99,20 @@ export default async function Notifications({ searchParams }: { searchParams: Pr
                     Otvori
                   </Link>
                 ) : null}
-                <form action={markRead}>
-                  <input type="hidden" name="id" value={n.id} />
-                  <input type="hidden" name="unread" value={n.read_at ? '1' : '0'} />
-                  <button className="btn btn-sm btn-ghost" aria-label={n.read_at ? 'Označi kao nepročitano' : 'Označi kao pročitano'}>
-                    {n.read_at ? '○' : '✓'}
-                  </button>
-                </form>
+                {n.read_at ? (
+                  <span className="read-box on" role="img" aria-label="Pročitano" title="Pročitano">
+                    ✓
+                  </span>
+                ) : (
+                  <form action={markRead}>
+                    <input type="hidden" name="id" value={n.id} />
+                    <button className="read-box" aria-label={`Označi kao pročitano: ${def.title}`} title="Označi kao pročitano" />
+                  </form>
+                )}
                 <form action={deleteNotification}>
                   <input type="hidden" name="id" value={n.id} />
                   <button className="btn btn-sm btn-ghost" aria-label={`Obriši obaveštenje: ${def.title}`} title="Obriši">
-                    🗑
+                    <TrashIcon />
                   </button>
                 </form>
               </div>

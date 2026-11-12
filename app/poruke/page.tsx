@@ -5,6 +5,7 @@ import Avatar from '@/components/Avatar';
 import { date } from '@/lib/format';
 import { clearConversation } from '@/app/_act/market';
 import SubmitButton from '@/components/SubmitButton';
+import TrashIcon from '@/components/TrashIcon';
 
 export const metadata: Metadata = { title: 'Poruke' };
 export const dynamic = 'force-dynamic';
@@ -62,7 +63,7 @@ export default async function Inbox({ searchParams }: { searchParams: Promise<{ 
               <form action={clearConversation}>
                 <input type="hidden" name="id" value={c.id} />
                 <SubmitButton className="btn btn-sm btn-ghost" pendingText="…">
-                  <span aria-hidden="true">🗑</span>
+                  <TrashIcon />
                   <span className="sr-only">Obriši razgovor sa @{other?.username} kod sebe</span>
                 </SubmitButton>
               </form>

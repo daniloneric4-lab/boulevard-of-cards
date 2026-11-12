@@ -516,7 +516,7 @@ export async function clearConversation(form: FormData) {
 }
 export async function markRead(form: FormData) {
   const { supabase } = await mustUser('/obavestenja');
-  await supabase.from('notifications').update({ read_at: form.get('unread') === '1' ? null : new Date().toISOString() }).eq('id', s(form, 'id'));
+  await supabase.from('notifications').update({ read_at: new Date().toISOString() }).eq('id', s(form, 'id')).is('read_at', null);
   revalidatePath('/', 'layout');
 }
 export async function toggleFollow(form: FormData) {
