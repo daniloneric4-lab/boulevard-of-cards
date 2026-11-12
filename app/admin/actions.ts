@@ -262,6 +262,21 @@ export async function updateService(form: FormData) {
   await supabase.from('service_requests').update(patch).eq('id', String(form.get('id')));
   revalidatePath('/admin/usluge');
 }
+export async function gradingBatch(form: FormData) {
+  const supabase = await createClient();
+  const id = String(form.get('id'));
+  const step = String(form.get('step'));
+  if (step === 'target') {
+    const n = Math.max(1, Math.min(1000, parseInt(String(form.get('target') || '20'), 10) || 20));
+    await supabase.from('grading_batches').update({ target_cards: n }).eq('id', id);
+  } else if (step === 'ship') {
+    await supabase.rpc('grading_ship_batch', { p_batch: id, p_tracking: String(form.get('tracking') || '') });
+  } else if (step === 'graded' || step === 'returned') {
+    await supabase.rpc('grading_batch_step', { p_batch: id, p_step: step });
+  }
+  revalidatePath('/admin/usluge');
+  revalidatePath('/usluge');
+}
 export async function reviewBoxCheck(form: FormData) {
   const supabase = await createClient();
   await supabase.rpc('review_box_check', { p_check_id: String(form.get('id')), p_approve: form.get('approve') === '1', p_note: String(form.get('note') || '') });

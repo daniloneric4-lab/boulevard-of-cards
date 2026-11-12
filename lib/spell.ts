@@ -123,10 +123,25 @@ export function cardNorm(t: string): string {
 }
 
 /** Da li upit sa liste želja odgovara naslovu (sve reči iz upita postoje u naslovu). */
+const GENERIC = new Set(
+  'topps chrome sapphire finest merlin stadium club heritage bowman dynasty inception museum midnight cosmic flagship update series refractor superfractor xfractor prizm prism wave mojo shimmer lava speckle atomic gold silver red blue green orange purple black pink white aqua yellow rookie rc auto autograph patch relic insert parallel numbered ssp sp variation base hobby box kutija jumbo blaster mega hanger pack case card kartica lite delight breaker psa bgs sgc cgc raw ucl uefa f1 formula nba nfl football basketball soccer league champions premier bundesliga competitions attax turbo match'.split(' '),
+);
+/** Isto kao wish_matches u bazi: dovoljno je da se poklopi ime, a opšte reči (Chrome, /99…) moraju sve da postoje. */
 export function wishMatches(query: string, title: string): boolean {
   const t = ' ' + cardNorm(title) + ' ';
   const toks = cardNorm(query).split(' ').filter((x) => x.length >= 2);
-  return toks.length > 0 && toks.every((x) => t.includes(x));
+  if (!toks.length) return false;
+  let named = 0;
+  let hit = 0;
+  for (const x of toks) {
+    if (GENERIC.has(x) || /[0-9]/.test(x)) {
+      if (!t.includes(x)) return false;
+    } else {
+      named++;
+      if (t.includes(x)) hit++;
+    }
+  }
+  return named === 0 || hit > 0;
 }
 
 /** Za pretragu: vraća ispravljen upit i da li je nešto promenjeno. */

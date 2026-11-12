@@ -189,24 +189,35 @@ export async function requestService(_: State, form: FormData): Promise<State> {
   const { supabase, user } = await me();
   if (!user) return fail('Prijavi se da bi poslao prijavu.');
   const service = s(form, 'service');
-  if (!['vault', 'consignment', 'buyback'].includes(service)) return fail('Izaberi uslugu.');
+  if (!['grading', 'vault', 'consignment', 'buyback'].includes(service)) return fail('Izaberi uslugu.');
   const raw = s(form, 'notes').slice(0, 2000);
   const item = s(form, 'collection_item_id') || null;
   if (!raw && !item) return fail('Napiši koju karticu šalješ.');
   const opt = s(form, 'opt');
   const notes = opt ? `[${opt}] ${raw}`.trim() : raw;
+  const grading = service === 'grading';
+  const lines = raw.split('\n').map((x) => x.trim()).filter(Boolean);
+  const tier = ['standard', 'priority', 'express'].includes(s(form, 'tier')) ? s(form, 'tier') : 'standard';
   const { error } = await supabase.from('service_requests').insert({
     user_id: user.id,
     service,
-    grading_company: service === 'grading' ? s(form, 'grading_company') || 'psa' : null,
+    grading_company: grading ? 'psa' : null,
     collection_item_id: item,
     notes: notes || null,
     status: 'submitted',
     currency: 'RSD',
+    ...(grading
+      ? { tier, cards: raw || null, card_count: Math.min(200, Math.max(1, lines.length + (item && !lines.length ? 1 : 0))), declared_value_cents: toCents(form.get('declared_value')) }
+      : {}),
   });
   if (error) return fail(clean(error.message));
   revalidatePath('/kolekcija');
-  return ok('Prijava je poslata. Javljamo ti cenu i rok u roku od 24 sata.');
+  revalidatePath('/usluge');
+  return ok(
+    grading
+      ? 'Prijava je primljena i ušla je u sledeći paket za PSA. Javljamo ti kad da doneseš kartice i koliko je PSA naknada.'
+      : 'Prijava je poslata. Javljamo ti cenu i rok u roku od 24 sata.',
+  );
 }
 
 /* ---------- kolekcija ---------- */
@@ -227,7 +238,8 @@ export async function createListing(_: State, form: FormData): Promise<State> {
   if (title.length < 4) return fail('Upiši naziv kartice (igrač, set, paralela).');
   const mode = s(form, 'mode') || 'fixed';
   const sport = s(form, 'sport') || 'other';
-  const grader = s(form, 'grader') || 'raw';
+  const isBox = s(form, 'kind') === 'sealed_box';
+  const grader = isBox ? 'raw' : s(form, 'grader') || 'raw';
   const grade = grader === 'raw' ? null : Number(s(form, 'grade').replace(',', '.')) || null;
   const price = toCents(form.get('price'));
   if ((mode === 'fixed' || mode === 'auction') && !price) return fail(mode === 'auction' ? 'Unesi početnu cenu.' : 'Unesi cenu.');
@@ -249,7 +261,7 @@ export async function createListing(_: State, form: FormData): Promise<State> {
     .insert({
       owner_id: user.id,
       title,
-      kind: grader === 'raw' ? 'card' : 'graded_card',
+      kind: isBox ? 'sealed_box' : grader === 'raw' ? 'card' : 'graded_card',
       grader,
       grade,
       cert_number: s(form, 'cert') || null,
@@ -269,7 +281,7 @@ export async function createListing(_: State, form: FormData): Promise<State> {
     .insert({
       seller_id: user.id,
       collection_item_id: item.id,
-      kind: grader === 'raw' ? 'card' : 'graded_card',
+      kind: isBox ? 'sealed_box' : grader === 'raw' ? 'card' : 'graded_card',
       sport,
       title,
       description: s(form, 'description').slice(0, 2000) || null,

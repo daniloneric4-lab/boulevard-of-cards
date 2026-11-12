@@ -200,6 +200,10 @@ a.lnk:hover { text-decoration: underline; }
 .stat-t { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
 .stat-tile b { font-family: var(--font-display); font-size: 26px; }
 .umenu-out { width: 100%; background: none; border: 0; cursor: pointer; font: 500 14px var(--font-body); color: var(--bc-carbon); }
+.progress { height: 10px; border-radius: 999px; background: var(--bc-line); overflow: hidden; }
+.progress span { display: block; height: 100%; background: var(--bc-red); border-radius: 999px; transition: width .4s ease; }
+.ftr-legal { max-width: 1280px; margin: 0 auto; padding: 16px 24px 28px; border-top: 1px solid var(--bc-line-dk); display: flex; flex-wrap: wrap; gap: 6px 24px; justify-content: space-between; font-size: 12px; line-height: 1.5; }
+.ftr-legal a { color: var(--bc-line); text-decoration: underline; text-underline-offset: 3px; }
 .ftr-links { display: flex; flex-wrap: wrap; gap: 4px 18px; }
 .ftr-links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--bc-line); }
 

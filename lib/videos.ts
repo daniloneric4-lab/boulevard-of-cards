@@ -1,4 +1,4 @@
-// Videi po kategoriji. Pri svakoj novoj poseti sajtu prikazuje se sledeci video iz liste.
+// Videi po kategoriji. Pri svakom otvaranju strane bira se nasumičan video iz liste.
 // pos = koji deo kadra se vidi kad se video seče (CSS object-position)
 export const CATEGORY_VIDEOS: Record<string, { src: string; poster: string; pos?: string }[]> = {
   football: [

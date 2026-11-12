@@ -262,8 +262,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ d
         </div>
       </section>
 
-      <section className="wrap stack">
-        <div className="two">
+      <section className="wrap stack" style={{ marginTop: 40 }}>
+        <div className="two" style={{ gap: 24 }}>
           <div className="card-dark stack">
             <span className="kicker">Pasoš kartice</span>
             <h3>Svaka kartica ima svoju istoriju</h3>

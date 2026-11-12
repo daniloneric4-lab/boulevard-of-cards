@@ -12,11 +12,13 @@ import { correctQuery } from '@/lib/spell';
 export const metadata: Metadata = { title: 'Prodavnica' };
 export const dynamic = 'force-dynamic';
 
-type SP = { sport?: string; q?: string; tacno?: string; nacin?: string; od?: string; do?: string; ocena?: string; sort?: string };
+type SP = { sport?: string; q?: string; tacno?: string; vrsta?: string; nacin?: string; od?: string; do?: string; ocena?: string; sort?: string };
 
 export default async function Shop({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
   const { sport, nacin, ocena, sort = 'new' } = sp;
+  const vrsta = sp.vrsta === 'kartice' || sp.vrsta === 'kutije' ? sp.vrsta : '';
+  const CARD_KINDS = ['card', 'graded_card', 'lot'];
   const typed = sp.q?.trim() || '';
   const fix = correctQuery(typed);
   const q = sp.tacno ? typed : fix.q;
@@ -26,7 +28,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<SP>
   const supabase = await createClient();
   let query = supabase
     .from('products')
-    .select('id, name, kind, sport, mode, price_cents, currency, stock, low_stock_at, image_path, description')
+    .select('id, name, kind, sport, mode, price_cents, currency, stock, low_stock_at, image_path, description, created_at, view_count')
     .eq('is_visible', true)
     .order('mode', { ascending: true });
   query = sort === 'popular' ? query.order('view_count', { ascending: false }) : sort === 'price_asc' ? query.order('price_cents', { ascending: true }) : sort === 'price_desc' ? query.order('price_cents', { ascending: false }) : query.order('created_at', { ascending: false });
@@ -34,7 +36,11 @@ export default async function Shop({ searchParams }: { searchParams: Promise<SP>
   if (dO) query = query.lte('price_cents', dO);
   if (sport && SPORTS.some((s) => s.key === sport)) query = query.eq('sport', sport);
   if (q) query = query.ilike('name', `%${q.replace(/[%_]/g, '')}%`);
-  let lq = supabase.from('listings').select(LISTING_SELECT).eq('status', 'active').neq('mode', 'showcase').limit(60);
+  if (vrsta === 'kutije') query = query.eq('kind', 'sealed_box');
+  if (vrsta === 'kartice') query = query.in('kind', CARD_KINDS);
+  let lq = supabase.from('listings').select(LISTING_SELECT + ', view_count').eq('status', 'active').neq('mode', 'showcase').limit(60);
+  if (vrsta === 'kutije') lq = lq.eq('kind', 'sealed_box');
+  if (vrsta === 'kartice') lq = lq.in('kind', CARD_KINDS);
   lq = sort === 'popular' ? lq.order('view_count', { ascending: false }).order('created_at', { ascending: false }) : sort === 'price_asc' ? lq.order('price_cents', { ascending: true, nullsFirst: false }) : sort === 'price_desc' ? lq.order('price_cents', { ascending: false, nullsFirst: false }) : lq.order('created_at', { ascending: false });
   if (nacin && ['fixed', 'auction', 'offers', 'trade'].includes(nacin)) lq = lq.eq('mode', nacin);
   if (od) lq = lq.gte('price_cents', od);
@@ -49,7 +55,29 @@ export default async function Shop({ searchParams }: { searchParams: Promise<SP>
     if (ocena === '10') return Number(ci?.grade) === 10;
     return true;
   });
-  const filtered = !!(nacin || od || dO || ocena);
+  const filtered = !!(nacin || od || dO || ocena || vrsta);
+  // zvanični proizvodi i oglasi kolekcionara u jednoj mreži, sortirani zajedno
+  type Item = { key: string; price: number | null; created: string; views: number; el: React.ReactNode };
+  const items: Item[] = [
+    ...(nacin || ocena ? [] : ((products ?? []) as (Product & { created_at: string; view_count: number })[])).map((p) => ({
+      key: 'p' + p.id,
+      price: p.price_cents,
+      created: p.created_at,
+      views: p.view_count ?? 0,
+      el: <ProductCard key={'p' + p.id} p={p} />,
+    })),
+    ...(listings as (ListingRow & { view_count?: number })[]).map((l) => ({
+      key: 'l' + l.id,
+      price: l.price_cents,
+      created: l.created_at,
+      views: l.view_count ?? 0,
+      el: <ListingTile key={'l' + l.id} l={l} />,
+    })),
+  ];
+  const big = Number.MAX_SAFE_INTEGER;
+  items.sort((a, b) =>
+    sort === 'popular' ? b.views - a.views : sort === 'price_asc' ? (a.price ?? big) - (b.price ?? big) : sort === 'price_desc' ? (b.price ?? -1) - (a.price ?? -1) : b.created.localeCompare(a.created),
+  );
   const changedView = filtered || sort !== 'new';
 
   const hero = HERO[sport ?? ''] ?? HERO[''];
@@ -100,6 +128,14 @@ export default async function Shop({ searchParams }: { searchParams: Promise<SP>
         {sport ? <input type="hidden" name="sport" value={sport} /> : null}
         {q ? <input type="hidden" name="q" value={q} /> : null}
         <label className="fld">
+          Vrsta
+          <select className="inp" name="vrsta" defaultValue={vrsta}>
+            <option value="">Sve</option>
+            <option value="kartice">Kartice</option>
+            <option value="kutije">Kutije</option>
+          </select>
+        </label>
+        <label className="fld">
           Način prodaje
           <select className="inp" name="nacin" defaultValue={nacin ?? ''}>
             <option value="">Sve</option>
@@ -144,31 +180,20 @@ export default async function Shop({ searchParams }: { searchParams: Promise<SP>
       </form>
 
       {error ? <div className="alert alert-err">Prodavnica trenutno ne može da se učita.</div> : null}
-      <h2>Zvanična ponuda</h2>
-      {products && products.length ? (
-        <div className="grid">
-          {(products as Product[]).map((p) => (
-            <ProductCard key={p.id} p={p} />
-          ))}
-        </div>
-      ) : (
-        <div className="alert alert-info">Nema proizvoda za ovaj izbor.</div>
-      )}
-
-      <div className="row between" style={{ marginTop: 16 }}>
-        <h2>Od kolekcionara</h2>
+      <div className="row between">
+        <span className="mono muted" style={{ fontSize: 13 }}>
+          {items.length} {items.length === 1 ? 'artikal' : 'artikala'}
+        </span>
         <Link href="/aukcije" className="btn btn-ghost btn-sm">
           Aukcije
         </Link>
       </div>
-      {listings.length ? (
-        <div className="grid-tiles">
-          {listings.map((l) => (
-            <ListingTile key={l.id} l={l} />
-          ))}
-        </div>
+      {items.length ? (
+        <div className="grid-tiles">{items.map((x) => x.el)}</div>
+      ) : filtered || q ? (
+        <div className="alert alert-info">Nema ničega za ovaj izbor.</div>
       ) : (
-        filtered ? <div className="alert alert-info">Nema oglasa za ove filtere.</div> : <DemoTiles sport={sport} />
+        <DemoTiles sport={sport} />
       )}
 
       <div className="two" style={{ marginTop: 8 }}>

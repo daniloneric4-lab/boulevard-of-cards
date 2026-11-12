@@ -43,7 +43,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <img src="/boc-b.png" alt="Boulevard of Cards" style={{ height: 28 }} />
             </Link>
             <span className="mono" style={{ fontSize: 12 }}>
-              IPS · Kartica · Uplatnica · Pouzeće · © {new Date().getFullYear()}
+              IPS · Kartica · Uplatnica · Pouzeće
+            </span>
+          </div>
+          <div className="ftr-legal">
+            <span>© {new Date().getFullYear()} Boulevard of Cards. Sva prava zadržana.</span>
+            <span>
+              Sadržaj, dizajn i kod sajta zaštićeni su autorskim pravom. Topps i nazivi setova su zaštitni znaci svojih vlasnika.
+            </span>
+            <span>
+              Dizajn i izrada: <b style={{ color: 'var(--bc-line)' }}>Bulevar.IT</b>
             </span>
           </div>
         </footer>

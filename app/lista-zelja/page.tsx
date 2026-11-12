@@ -81,7 +81,8 @@ export default async function WishList({ searchParams }: { searchParams: Promise
             )}
             <ol className="ticks muted" style={{ fontSize: 13, margin: 0 }}>
               <li>Ime se samo ispravi: „saphire” postaje „Sapphire”.</li>
-              <li>Ne mora tačan naziv, dovoljno je npr. „Jokić Chrome /99”.</li>
+              <li>Može i kartica koje još nema na sajtu, npr. „Kimi Antonelli”. Čim je neko postavi, stiže ti obaveštenje.</li>
+              <li>Ne mora tačan naziv: dovoljno je ime igrača, a reči kao Chrome ili /99 suze izbor.</li>
               <li>Obaveštenje stiže i kad oglas pojeftini ispod tvoje cene.</li>
             </ol>
           </section>
@@ -144,20 +145,28 @@ export default async function WishList({ searchParams }: { searchParams: Promise
               </label>
               <input id="wq" className="inp" name="q" defaultValue={q} placeholder="Igrač, set, paralela…" />
               <button className="btn btn-dark">Traži</button>
+              {q ? (
+                <Link href={sport ? `/lista-zelja?sport=${sport}` : '/lista-zelja'} className="btn btn-ghost" aria-label="Obriši pretragu">
+                  ×
+                </Link>
+              ) : null}
             </form>
           </div>
           <p className="muted" style={{ fontSize: 13, margin: 0 }}>
             Spisak se sam puni: svaka kartica koju neko postavi na sajt ili doda u javnu kolekciju, i svako novo izdanje, ulazi ovde.
           </p>
-          <div className="chips">
-            <Link href={qs()} className={'chip' + (!sport ? ' on' : '')}>
-              Sve
-            </Link>
+          <div className="chips" aria-label="Sport">
             {SPORTS.map((s) => (
-              <Link key={s.key} href={qs(s.key)} className={'chip' + (sport === s.key ? ' on' : '')}>
+              <Link key={s.key} href={qs(sport === s.key ? undefined : s.key)} className={'chip' + (sport === s.key ? ' on' : '')} aria-pressed={sport === s.key}>
                 {s.label}
+                {sport === s.key ? ' ×' : ''}
               </Link>
             ))}
+            {q || sport ? (
+              <Link href="/lista-zelja" className="chip" style={{ borderStyle: 'dashed' }}>
+                Poništi pretragu ×
+              </Link>
+            ) : null}
           </div>
           {corrected ? (
             <p className="muted" style={{ fontSize: 14 }} role="status">
