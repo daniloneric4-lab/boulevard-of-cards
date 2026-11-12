@@ -17,7 +17,9 @@ const label = (c: Cat) => c.title || [c.year, c.set_name, c.player, c.parallel].
 
 export default async function WishList({ searchParams }: { searchParams: Promise<{ q?: string; sport?: string; tacno?: string }> }) {
   const sp = await searchParams;
-  const sport = sp.sport && SPORTS.some((s) => s.key === sp.sport) ? sp.sport : undefined;
+  // može više sportova odjednom: ?sport=football,f1
+  const sports = (sp.sport ?? '').split(',').filter((k) => SPORTS.some((s) => s.key === k));
+  const sport = sports.length ? sports.join(',') : undefined;
   const typed = sp.q?.trim() || '';
   const fix = correctQuery(typed);
   const q = sp.tacno ? typed : fix.q;
@@ -25,7 +27,7 @@ export default async function WishList({ searchParams }: { searchParams: Promise
   const { supabase, user } = await getSessionInfo();
 
   let cq = supabase.from('card_catalog').select('id, sport, title, player, set_name, year, parallel').limit(300);
-  if (sport) cq = cq.eq('sport', sport);
+  if (sports.length) cq = cq.in('sport', sports);
   for (const tok of cardNorm(q).split(' ').filter((t) => t.length >= 2).slice(0, 6)) cq = cq.ilike('norm', `%${tok}%`);
 
   const [{ data: cats }, { data: active }, { data: mine }] = await Promise.all([
@@ -157,9 +159,9 @@ export default async function WishList({ searchParams }: { searchParams: Promise
           </p>
           <div className="chips" aria-label="Sport">
             {SPORTS.map((s) => (
-              <Link key={s.key} href={qs(sport === s.key ? undefined : s.key)} className={'chip' + (sport === s.key ? ' on' : '')} aria-pressed={sport === s.key}>
+              <Link key={s.key} href={qs((sports.includes(s.key) ? sports.filter((x) => x !== s.key) : [...sports, s.key]).join(',') || undefined)} className={'chip' + (sports.includes(s.key) ? ' on' : '')} aria-pressed={sports.includes(s.key)}>
                 {s.label}
-                {sport === s.key ? ' ×' : ''}
+                {sports.includes(s.key) ? ' ×' : ''}
               </Link>
             ))}
             {q || sport ? (

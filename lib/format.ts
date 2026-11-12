@@ -3,7 +3,7 @@ export const SPORTS: { key: string; label: string }[] = [
   { key: 'f1', label: 'F1' },
   { key: 'nba', label: 'NBA' },
   { key: 'nfl', label: 'NFL' },
-  { key: 'other', label: 'Oprema i ostalo' },
+  { key: 'other', label: 'Ostali sportovi' },
 ];
 
 export const sportLabel = (k: string | null | undefined) => SPORTS.find((s) => s.key === k)?.label ?? 'Ostalo';

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import AdminBadge from './AdminBadge';
 import CardArt from './CardArt';
 import { gradeLabel, listingImage, money, sportLabel, timeLeft, LISTING_MODE } from '@/lib/format';
 import { one, type ListingRow } from '@/lib/listings';
@@ -26,7 +27,7 @@ export default function ListingTile({ l }: { l: ListingRow }) {
         {seller ? (
           <Link href={`/u/${seller.username}`} className="lnk" style={{ fontSize: 13 }}>
             @{seller.username}
-            {seller.is_verified ? ' ✓' : ''}
+            {seller.is_verified ? ' ✓' : ''} <AdminBadge role={seller.role} />
             {l.city ? <span className="muted" style={{ fontWeight: 400 }}> · {l.city}</span> : null}
           </Link>
         ) : null}

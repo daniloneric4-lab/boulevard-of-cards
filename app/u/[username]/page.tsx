@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import AdminBadge from '@/components/AdminBadge';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getSessionInfo } from '@/lib/supabase/server';
@@ -21,7 +22,7 @@ export default async function PublicProfile({ params, searchParams }: { params: 
   const { username } = await params;
   const { t = 'prodaja' } = await searchParams;
   const { supabase, user } = await getSessionInfo();
-  const { data: p } = await supabase.from('profiles').select('id, username, display_name, city, bio, collects, avatar_url, is_verified, is_suspended, created_at').eq('username', decodeURIComponent(username).toLowerCase()).maybeSingle();
+  const { data: p } = await supabase.from('profiles').select('id, username, display_name, city, bio, collects, avatar_url, is_verified, is_suspended, created_at, role').eq('username', decodeURIComponent(username).toLowerCase()).maybeSingle();
   if (!p || p.is_suspended) notFound();
   const me = user?.id === p.id;
   const [{ data: listings }, { data: shown }, { data: wants }, { data: reviews }, { count: followers }, fol, matches, { count: sold }] = await Promise.all([
@@ -50,6 +51,7 @@ export default async function PublicProfile({ params, searchParams }: { params: 
             <div className="row" style={{ gap: 10 }}>
               <h1 style={{ fontSize: 'clamp(28px,4vw,44px)' }}>@{p.username}</h1>
               {p.is_verified ? <span className="pill pill-green">✓ Verifikovan prodavac</span> : null}
+              <AdminBadge role={p.role} />
             </div>
             <span style={{ color: 'var(--bc-gray-dk)', fontSize: 14 }}>
               {[p.city, p.collects ? 'skuplja ' + p.collects : null, 'član od ' + date(p.created_at)].filter(Boolean).join(' · ')}

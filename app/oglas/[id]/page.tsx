@@ -13,6 +13,7 @@ import { LISTING_SELECT, one, type ListingRow } from '@/lib/listings';
 import BidForm from './BidForm';
 import BuyForm from './BuyForm';
 import ViewPing from '@/components/ViewPing';
+import AdminBadge from '@/components/AdminBadge';
 
 export const dynamic = 'force-dynamic';
 
@@ -266,7 +267,7 @@ export default async function ListingPage({ params, searchParams }: { params: Pr
               <Avatar name={seller.username} url={seller.avatar_url} size={48} />
               <div className="stack" style={{ gap: 2, flex: 1 }}>
                 <Link href={`/u/${seller.username}`} style={{ fontWeight: 700, textDecoration: 'none' }}>
-                  @{seller.username}
+                  @{seller.username} <AdminBadge role={seller.role} />
                 </Link>
                 <span className="muted" style={{ fontSize: 13 }}>
                   {seller.is_verified ? 'Verifikovan prodavac' : 'Prodavac'}

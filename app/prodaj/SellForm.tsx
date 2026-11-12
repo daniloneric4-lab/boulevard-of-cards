@@ -47,7 +47,7 @@ export default function SellForm({ initialTitle = '', initialSport = 'football',
   const [grade, setGrade] = useState('10');
   const [price, setPrice] = useState('');
   const [preview, setPreview] = useState<string | null>(null);
-  const gl = kind === 'sealed_box' ? 'BOX' : grader === 'raw' ? 'RAW' : `${grader.toUpperCase()} ${grade}`;
+  const gl = kind === 'supply' ? 'OPREMA' : kind === 'sealed_box' ? 'BOX' : grader === 'raw' ? 'RAW' : `${grader.toUpperCase()} ${grade}`;
 
   return (
     <div className="side">
@@ -108,7 +108,7 @@ export default function SellForm({ initialTitle = '', initialSport = 'football',
         <section className="card stack">
           <h3>2. Proveri podatke</h3>
           <label className="fld">
-            {kind === 'sealed_box' ? 'Kutija (godina, set, vrsta: Hobby, Jumbo…)' : 'Kartica (godina, set, igrač, paralela)'}
+            {kind === 'supply' ? 'Šta prodaješ (npr. 100 top loadera 35pt)' : kind === 'sealed_box' ? 'Kutija (godina, set, vrsta: Hobby, Jumbo…)' : 'Kartica (godina, set, igrač, paralela)'}
             <input className="inp" name="title" required minLength={4} value={title}
               onChange={(e) => {
                 setTitle(e.target.value);
@@ -131,6 +131,7 @@ export default function SellForm({ initialTitle = '', initialSport = 'football',
               <select className="inp" name="kind" value={kind} onChange={(e) => setKind(e.target.value)}>
                 <option value="card">Kartica</option>
                 <option value="sealed_box">Zatvorena kutija</option>
+                <option value="supply">Oprema (folije, top loaderi…)</option>
               </select>
             </label>
             <label className="fld" style={{ flex: '1 1 160px' }}>
@@ -143,7 +144,7 @@ export default function SellForm({ initialTitle = '', initialSport = 'football',
                 ))}
               </select>
             </label>
-            {kind !== 'sealed_box' ? (
+            {kind === 'card' ? (
             <label className="fld" style={{ flex: '1 1 140px' }}>
               Stanje
               <select className="inp" name="grader" value={grader} onChange={(e) => setGrader(e.target.value)}>
@@ -155,9 +156,9 @@ export default function SellForm({ initialTitle = '', initialSport = 'football',
               </select>
             </label>
             ) : null}
-            {kind === 'sealed_box' ? (
+            {kind !== 'card' ? (
               <label className="fld" style={{ flex: '1 1 200px' }}>
-                Stanje kutije
+                {kind === 'supply' ? 'Stanje (novo, korišćeno…)' : 'Stanje kutije'}
                 <input className="inp" name="condition" placeholder="npr. fabrički zatvorena, folija netaknuta" />
               </label>
             ) : grader !== 'raw' ? (

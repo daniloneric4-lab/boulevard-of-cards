@@ -60,7 +60,9 @@ export default function UserMenu({
         <div className="umenu-pop" role="menu">
           <div className="umenu-head">
             <b>{name || username}</b>
-            <span className="mono muted">@{username}</span>
+            <span className="mono muted">
+              @{username} {isAdmin ? <span className="admin-badge">Admin</span> : null}
+            </span>
           </div>
           <div className="umenu-status">
             <span className="umenu-st-h">

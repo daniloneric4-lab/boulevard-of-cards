@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import ProductCard, { type Product } from '@/components/ProductCard';
 import RotatingVideo from '@/components/RotatingVideo';
+import AutoForm from '@/components/AutoForm';
 import { SPORTS } from '@/lib/format';
 import ListingTile from '@/components/ListingTile';
 import DemoTiles from '@/components/DemoTiles';
@@ -16,8 +17,23 @@ type SP = { sport?: string; q?: string; tacno?: string; vrsta?: string; nacin?: 
 
 export default async function Shop({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
-  const { sport, nacin, ocena, sort = 'new' } = sp;
-  const vrsta = sp.vrsta === 'kartice' || sp.vrsta === 'kutije' ? sp.vrsta : '';
+  const { nacin, ocena, sort = 'new' } = sp;
+  // može više sportova odjednom: ?sport=football,f1
+  const sports = (sp.sport ?? '').split(',').filter((k) => SPORTS.some((s) => s.key === k));
+  const sport = sports.length ? sports.join(',') : undefined;
+  const vrsta = ['kartice', 'kutije', 'oprema'].includes(sp.vrsta ?? '') ? sp.vrsta! : '';
+  // link koji zadržava sve ostale izabrane filtere
+  const href = (over: Partial<SP>) => {
+    const u = new URLSearchParams();
+    const all: SP = { ...sp, sport, ...over };
+    for (const [k, v] of Object.entries(all)) if (v) u.set(k, String(v));
+    const t = u.toString();
+    return '/prodavnica' + (t ? '?' + t : '');
+  };
+  const toggleSport = (k: string) => {
+    const next = sports.includes(k) ? sports.filter((x) => x !== k) : [...sports, k];
+    return href({ sport: next.join(',') || undefined });
+  };
   const CARD_KINDS = ['card', 'graded_card', 'lot'];
   const typed = sp.q?.trim() || '';
   const fix = correctQuery(typed);
@@ -34,18 +50,22 @@ export default async function Shop({ searchParams }: { searchParams: Promise<SP>
   query = sort === 'popular' ? query.order('view_count', { ascending: false }) : sort === 'price_asc' ? query.order('price_cents', { ascending: true }) : sort === 'price_desc' ? query.order('price_cents', { ascending: false }) : query.order('created_at', { ascending: false });
   if (od) query = query.gte('price_cents', od);
   if (dO) query = query.lte('price_cents', dO);
-  if (sport && SPORTS.some((s) => s.key === sport)) query = query.eq('sport', sport);
+  if (sports.length) query = query.in('sport', sports);
   if (q) query = query.ilike('name', `%${q.replace(/[%_]/g, '')}%`);
   if (vrsta === 'kutije') query = query.eq('kind', 'sealed_box');
   if (vrsta === 'kartice') query = query.in('kind', CARD_KINDS);
+  if (vrsta === 'oprema') query = query.eq('kind', 'supply');
+  else if (sports.length) query = query.neq('kind', 'supply');
   let lq = supabase.from('listings').select(LISTING_SELECT + ', view_count').eq('status', 'active').neq('mode', 'showcase').limit(60);
   if (vrsta === 'kutije') lq = lq.eq('kind', 'sealed_box');
   if (vrsta === 'kartice') lq = lq.in('kind', CARD_KINDS);
+  if (vrsta === 'oprema') lq = lq.eq('kind', 'supply');
+  else if (sports.length) lq = lq.neq('kind', 'supply');
   lq = sort === 'popular' ? lq.order('view_count', { ascending: false }).order('created_at', { ascending: false }) : sort === 'price_asc' ? lq.order('price_cents', { ascending: true, nullsFirst: false }) : sort === 'price_desc' ? lq.order('price_cents', { ascending: false, nullsFirst: false }) : lq.order('created_at', { ascending: false });
   if (nacin && ['fixed', 'auction', 'offers', 'trade'].includes(nacin)) lq = lq.eq('mode', nacin);
   if (od) lq = lq.gte('price_cents', od);
   if (dO) lq = lq.lte('price_cents', dO);
-  if (sport && SPORTS.some((s) => s.key === sport)) lq = lq.eq('sport', sport);
+  if (sports.length) lq = lq.in('sport', sports);
   if (q) lq = lq.ilike('title', `%${q.replace(/[%_]/g, '')}%`);
   const [{ data: products, error }, { data: rawListings }] = await Promise.all([query, lq]);
   const listings = ((rawListings ?? []) as unknown as ListingRow[]).filter((l) => {
@@ -80,12 +100,12 @@ export default async function Shop({ searchParams }: { searchParams: Promise<SP>
   );
   const changedView = filtered || sort !== 'new';
 
-  const hero = HERO[sport ?? ''] ?? HERO[''];
+  const hero = vrsta === 'oprema' ? HERO.oprema : sports.length === 1 ? HERO[sports[0]] ?? HERO[''] : HERO[''];
 
   return (
     <>
     <section className="hero hero-shop" aria-label="Prodavnica">
-      <RotatingVideo key={sport ?? 'all'} category={sport && HERO[sport] ? sport : 'all'} />
+      <RotatingVideo key={sport ?? 'all'} category={sports.length === 1 && ['football', 'f1', 'nba', 'nfl'].includes(sports[0]) ? sports[0] : 'all'} />
       <div className="hero-in">
         <span className="kicker">Zvanična prodavnica</span>
         <h1>{hero.title}</h1>
@@ -113,18 +133,30 @@ export default async function Shop({ searchParams }: { searchParams: Promise<SP>
         </p>
       ) : null}
 
-      <div className="chips" aria-label="Sport">
-        <Link href="/prodavnica" className={'chip' + (!sport ? ' on' : '')}>
+      <div className="chips" aria-label="Sport i vrsta (može više odjednom)">
+        <Link href={href({ sport: undefined, vrsta: vrsta === 'oprema' ? undefined : vrsta || undefined })} className={'chip' + (!sports.length && vrsta !== 'oprema' ? ' on' : '')}>
           Sve
         </Link>
-        {SPORTS.map((s) => (
-          <Link key={s.key} href={`/prodavnica?sport=${s.key}`} className={'chip' + (sport === s.key ? ' on' : '')}>
-            {s.label}
+        {SPORTS.map((s) => {
+          const on = sports.includes(s.key);
+          return (
+            <Link key={s.key} href={toggleSport(s.key)} className={'chip' + (on ? ' on' : '')} aria-pressed={on}>
+              {s.label}
+              {on ? ' ×' : ''}
+            </Link>
+          );
+        })}
+        <Link href={href({ vrsta: vrsta === 'oprema' ? undefined : 'oprema' })} className={'chip' + (vrsta === 'oprema' ? ' on' : '')} aria-pressed={vrsta === 'oprema'}>
+          Oprema{vrsta === 'oprema' ? ' ×' : ''}
+        </Link>
+        {sports.length > 1 || (sports.length && vrsta) ? (
+          <Link href="/prodavnica" className="chip" style={{ borderStyle: 'dashed' }}>
+            Poništi sve ×
           </Link>
-        ))}
+        ) : null}
       </div>
 
-      <form action="/prodavnica" className="filters" aria-label="Filteri">
+      <AutoForm action="/prodavnica" className="filters" aria-label="Filteri">
         {sport ? <input type="hidden" name="sport" value={sport} /> : null}
         {q ? <input type="hidden" name="q" value={q} /> : null}
         <label className="fld">
@@ -133,6 +165,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<SP>
             <option value="">Sve</option>
             <option value="kartice">Kartice</option>
             <option value="kutije">Kutije</option>
+            <option value="oprema">Oprema</option>
           </select>
         </label>
         <label className="fld">
@@ -177,7 +210,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<SP>
             Poništi
           </Link>
         ) : null}
-      </form>
+      </AutoForm>
 
       {error ? <div className="alert alert-err">Prodavnica trenutno ne može da se učita.</div> : null}
       <div className="row between">
@@ -193,7 +226,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<SP>
       ) : filtered || q ? (
         <div className="alert alert-info">Nema ničega za ovaj izbor.</div>
       ) : (
-        <DemoTiles sport={sport} />
+        <DemoTiles sport={sports[0]} />
       )}
 
       <div className="two" style={{ marginTop: 8 }}>
@@ -223,5 +256,6 @@ const HERO: Record<string, { title: string; tag: string; video: string; poster: 
   f1: { title: 'F1', tag: 'Topps Chrome F1, Sapphire i Turbo Attax.', video: '/kat-f1.mp4', poster: '/kat-f1.jpg' },
   nba: { title: 'NBA', tag: 'Jokić, Dončić i nova rookie klasa. Chrome, Flagship i Finest.', video: '/kat-nba.mp4', poster: '/kat-nba.jpg' },
   nfl: { title: 'NFL', tag: 'Rookie klasa, Chrome i Midnight. Quarterbackovi i autogrami.', video: '/kat-nfl.mp4', poster: '/kat-nfl.jpg' },
-  other: { title: 'Oprema i ostalo', tag: 'Top loaderi, sleeve-ovi, magnetni držači i sve za čuvanje kartica.', video: '/hero-kartice.mp4', poster: '/hero-kartice.jpg' },
+  other: { title: 'Ostali sportovi', tag: 'Tenis, UFC, bejzbol i ostali Topps sportovi.', video: '/hero-kartice.mp4', poster: '/hero-kartice.jpg' },
+  oprema: { title: 'Oprema', tag: 'Zaštitne folije, top loaderi, magnetni držači i sve za čuvanje kartica.', video: '/hero-kartice.mp4', poster: '/hero-kartice.jpg' },
 };

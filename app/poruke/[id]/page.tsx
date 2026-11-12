@@ -6,6 +6,7 @@ import SubmitButton from '@/components/SubmitButton';
 import { clearConversation, respondOffer, respondTrade } from '@/app/_act/market';
 import { date, money } from '@/lib/format';
 import Composer from './Composer';
+import AdminBadge from '@/components/AdminBadge';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,13 +17,13 @@ export default async function Conversation({ params }: { params: Promise<{ id: s
   const { supabase, user } = await requireUser(`/poruke/${id}`);
   const { data: c } = await supabase
     .from('conversations')
-    .select('id, buyer_id, seller_id, listing_id, buyer_cleared_at, seller_cleared_at, buyer:profiles!conversations_buyer_id_fkey(id, username, avatar_url, is_verified), seller:profiles!conversations_seller_id_fkey(id, username, avatar_url, is_verified), listings(id, title, price_cents, currency, status)')
+    .select('id, buyer_id, seller_id, listing_id, buyer_cleared_at, seller_cleared_at, buyer:profiles!conversations_buyer_id_fkey(id, username, avatar_url, is_verified, role), seller:profiles!conversations_seller_id_fkey(id, username, avatar_url, is_verified, role), listings(id, title, price_cents, currency, status)')
     .eq('id', id)
     .maybeSingle();
   if (!c) notFound();
   await supabase.rpc('mark_conversation_read', { p_conversation_id: id });
   const otherRaw = c.buyer_id === user.id ? c.seller : c.buyer;
-  const other = (Array.isArray(otherRaw) ? otherRaw[0] : otherRaw) as { id: string; username: string; avatar_url: string | null; is_verified: boolean };
+  const other = (Array.isArray(otherRaw) ? otherRaw[0] : otherRaw) as { id: string; username: string; avatar_url: string | null; is_verified: boolean; role?: string | null };
   const li = Array.isArray(c.listings) ? c.listings[0] : c.listings;
   const [{ data: msgs }, { data: offers }, { data: trades }, { data: mine }, { data: theirs }] = await Promise.all([
     // posle brisanja kod sebe vidiš samo nove poruke
@@ -49,7 +50,7 @@ export default async function Conversation({ params }: { params: Promise<{ id: s
         <Avatar name={other.username} url={other.avatar_url} size={52} />
         <div className="stack" style={{ gap: 2, flex: 1 }}>
           <Link href={`/u/${other.username}`} style={{ fontWeight: 700, fontSize: 20, textDecoration: 'none' }}>
-            @{other.username} {other.is_verified ? <span className="pill pill-green">Verifikovan</span> : null}
+            @{other.username} {other.is_verified ? <span className="pill pill-green">Verifikovan</span> : null} <AdminBadge role={other.role} />
           </Link>
           {li ? (
             <span className="muted" style={{ fontSize: 14 }}>

@@ -239,7 +239,8 @@ export async function createListing(_: State, form: FormData): Promise<State> {
   const mode = s(form, 'mode') || 'fixed';
   const sport = s(form, 'sport') || 'other';
   const isBox = s(form, 'kind') === 'sealed_box';
-  const grader = isBox ? 'raw' : s(form, 'grader') || 'raw';
+  const isSupply = s(form, 'kind') === 'supply';
+  const grader = isBox || isSupply ? 'raw' : s(form, 'grader') || 'raw';
   const grade = grader === 'raw' ? null : Number(s(form, 'grade').replace(',', '.')) || null;
   const price = toCents(form.get('price'));
   if ((mode === 'fixed' || mode === 'auction') && !price) return fail(mode === 'auction' ? 'Unesi početnu cenu.' : 'Unesi cenu.');
@@ -261,7 +262,7 @@ export async function createListing(_: State, form: FormData): Promise<State> {
     .insert({
       owner_id: user.id,
       title,
-      kind: isBox ? 'sealed_box' : grader === 'raw' ? 'card' : 'graded_card',
+      kind: isSupply ? 'supply' : isBox ? 'sealed_box' : grader === 'raw' ? 'card' : 'graded_card',
       grader,
       grade,
       cert_number: s(form, 'cert') || null,
@@ -281,7 +282,7 @@ export async function createListing(_: State, form: FormData): Promise<State> {
     .insert({
       seller_id: user.id,
       collection_item_id: item.id,
-      kind: isBox ? 'sealed_box' : grader === 'raw' ? 'card' : 'graded_card',
+      kind: isSupply ? 'supply' : isBox ? 'sealed_box' : grader === 'raw' ? 'card' : 'graded_card',
       sport,
       title,
       description: s(form, 'description').slice(0, 2000) || null,
