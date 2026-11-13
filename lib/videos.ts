@@ -14,9 +14,9 @@ export const CATEGORY_VIDEOS: Record<string, { src: string; poster: string; pos?
     { src: '/kat-nfl-1.mp4', poster: '/kat-nfl-1.jpg' }, // generisan
     { src: '/kat-nfl-2.mp4', poster: '/kat-nfl-2.jpg', pos: 'center 80%' }, // utakmica: vidi se donji deo kadra (teren i igraci)
   ],
-  other: [{ src: '/hero-kartice.mp4', poster: '/hero-kartice.jpg' }],
+  other: [{ src: '/kat-ostalo-1.mp4', poster: '/kat-ostalo-1.jpg' }], // bejzbol, tenis servis, MMA
   all: [{ src: '/hero-kartice.mp4', poster: '/hero-kartice.jpg' }],
 };
 
 // svi sportski videi zajedno (npr. vrh strane Aukcije kad nije izabran sport)
-CATEGORY_VIDEOS.mix = [...CATEGORY_VIDEOS.football, ...CATEGORY_VIDEOS.f1, ...CATEGORY_VIDEOS.nba, ...CATEGORY_VIDEOS.nfl];
+CATEGORY_VIDEOS.mix = [...CATEGORY_VIDEOS.football, ...CATEGORY_VIDEOS.f1, ...CATEGORY_VIDEOS.nba, ...CATEGORY_VIDEOS.nfl, ...CATEGORY_VIDEOS.other];
