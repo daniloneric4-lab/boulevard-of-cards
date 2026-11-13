@@ -18,8 +18,8 @@ type SP = { sport?: string; q?: string; tacno?: string; vrsta?: string; nacin?: 
 export default async function Shop({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
   const { nacin, ocena, sort = 'new' } = sp;
-  // može više sportova odjednom: ?sport=football,f1
-  const sports = (sp.sport ?? '').split(',').filter((k) => SPORTS.some((s) => s.key === k));
+  // jedan sport odjednom (?sport=football)
+  const sports = (sp.sport ?? '').split(',').filter((k) => SPORTS.some((s) => s.key === k)).slice(0, 1);
   const sport = sports.length ? sports.join(',') : undefined;
   const vrsta = ['kartice', 'kutije', 'oprema'].includes(sp.vrsta ?? '') ? sp.vrsta! : '';
   // link koji zadržava sve ostale izabrane filtere
@@ -29,10 +29,6 @@ export default async function Shop({ searchParams }: { searchParams: Promise<SP>
     for (const [k, v] of Object.entries(all)) if (v) u.set(k, String(v));
     const t = u.toString();
     return '/prodavnica' + (t ? '?' + t : '');
-  };
-  const toggleSport = (k: string) => {
-    const next = sports.includes(k) ? sports.filter((x) => x !== k) : [...sports, k];
-    return href({ sport: next.join(',') || undefined });
   };
   const CARD_KINDS = ['card', 'graded_card', 'lot'];
   const typed = sp.q?.trim() || '';
@@ -105,7 +101,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<SP>
   return (
     <>
     <section className="hero hero-shop" aria-label="Prodavnica">
-      <RotatingVideo key={sport ?? 'all'} category={sports.length === 1 && ['football', 'f1', 'nba', 'nfl'].includes(sports[0]) ? sports[0] : 'all'} />
+      <RotatingVideo key={sport ?? 'all'} category={sports.length === 1 && ['football', 'f1', 'nba', 'nfl', 'other'].includes(sports[0]) ? sports[0] : 'all'} />
       <div className="hero-in">
         <span className="kicker">Zvanična prodavnica</span>
         <h1>{hero.title}</h1>
@@ -133,27 +129,21 @@ export default async function Shop({ searchParams }: { searchParams: Promise<SP>
         </p>
       ) : null}
 
-      <div className="chips" aria-label="Sport i vrsta (može više odjednom)">
+      <div className="chips" aria-label="Sport">
         <Link href={href({ sport: undefined, vrsta: vrsta === 'oprema' ? undefined : vrsta || undefined })} className={'chip' + (!sports.length && vrsta !== 'oprema' ? ' on' : '')}>
           Sve
         </Link>
         {SPORTS.map((s) => {
-          const on = sports.includes(s.key);
+          const on = sports.length === 1 && sports[0] === s.key && vrsta !== 'oprema';
           return (
-            <Link key={s.key} href={toggleSport(s.key)} className={'chip' + (on ? ' on' : '')} aria-pressed={on}>
+            <Link key={s.key} href={href({ sport: s.key, vrsta: vrsta === 'oprema' ? undefined : vrsta || undefined })} className={'chip' + (on ? ' on' : '')} aria-current={on ? 'true' : undefined}>
               {s.label}
-              {on ? ' ×' : ''}
             </Link>
           );
         })}
-        <Link href={href({ vrsta: vrsta === 'oprema' ? undefined : 'oprema' })} className={'chip' + (vrsta === 'oprema' ? ' on' : '')} aria-pressed={vrsta === 'oprema'}>
-          Oprema{vrsta === 'oprema' ? ' ×' : ''}
+        <Link href={href({ sport: undefined, vrsta: 'oprema' })} className={'chip' + (vrsta === 'oprema' ? ' on' : '')} aria-current={vrsta === 'oprema' ? 'true' : undefined}>
+          Oprema
         </Link>
-        {sports.length > 1 || (sports.length && vrsta) ? (
-          <Link href="/prodavnica" className="chip" style={{ borderStyle: 'dashed' }}>
-            Poništi sve ×
-          </Link>
-        ) : null}
       </div>
 
       <AutoForm action="/prodavnica" className="filters" aria-label="Filteri">
