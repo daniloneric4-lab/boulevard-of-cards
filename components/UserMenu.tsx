@@ -43,9 +43,7 @@ export default function UserMenu({
     [`/u/${username}`, 'Moj profil'],
     ['/kolekcija', 'Moja kolekcija'],
     ['/profil', 'Porudžbine, prijave, preorderi'],
-    ['/poruke', 'Poruke', unreadMsgs],
     ['/prodavac', 'Panel prodavca'],
-    ['/prodaj', 'Prodaj karticu'],
     ['/podesavanja', 'Podešavanja'],
   ];
   return (
@@ -54,7 +52,6 @@ export default function UserMenu({
         <span className="ava" style={{ width: 36, height: 36, fontSize: 14 }}>
           {src ? <img src={src} alt="" /> : initials(name || username)}
         </span>
-        {unreadMsgs ? <span className="dot-badge" aria-hidden="true" /> : null}
       </button>
       {open ? (
         <div className="umenu-pop" role="menu">

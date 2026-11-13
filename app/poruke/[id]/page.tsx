@@ -36,7 +36,7 @@ export default async function Conversation({ params }: { params: Promise<{ id: s
     supabase.from('offers').select('*').eq('conversation_id', id),
     supabase.from('trades').select('*, trade_items(side, collection_items(title))').eq('conversation_id', id),
     supabase.from('collection_items').select('id, title').eq('owner_id', user.id).limit(60),
-    supabase.from('collection_items').select('id, title').eq('owner_id', other.id).eq('is_public', true).limit(60),
+    supabase.from('collection_items').select('id, title').eq('owner_id', other.id).limit(60),
   ]);
   const offerById = new Map((offers ?? []).map((o) => [o.id, o]));
   const tradeById = new Map((trades ?? []).map((t) => [t.id, t]));

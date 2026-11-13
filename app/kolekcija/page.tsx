@@ -3,12 +3,10 @@ import type { Metadata } from 'next';
 import { requireUser } from '@/lib/auth';
 import Avatar from '@/components/Avatar';
 import CardArt from '@/components/CardArt';
-import ActionForm from '@/components/ActionForm';
-import AutoFixInput from '@/components/AutoFixInput';
 import SubmitButton from '@/components/SubmitButton';
 import WishForm from '@/components/WishForm';
-import { addCollectionItem, deleteCollectionItem, removeWish, updateCollectionItem } from '@/app/_act/market';
-import { SERVICE, SERVICE_STATUS, date, gradeLabel, money } from '@/lib/format';
+import { deleteCollectionItem, removeWish, updateCollectionItem } from '@/app/_act/market';
+import { SERVICE, SERVICE_STATUS, date, gradeLabel, listingImage, money } from '@/lib/format';
 
 export const metadata: Metadata = { title: 'Moja kolekcija' };
 export const dynamic = 'force-dynamic';
@@ -27,6 +25,15 @@ export default async function Collection({ searchParams }: { searchParams: Promi
   const all = items ?? [];
   const value = all.reduce((s, i) => s + (i.estimated_value_cents ?? 0), 0);
   const listed = new Map((listings ?? []).map((l) => [l.collection_item_id, l.id]));
+  // slika kartice = slika sa oglasa na koji je vezana (i kad je prodata ili kupljena)
+  const { data: pics } = all.length
+    ? await supabase.from('listings').select('collection_item_id, listing_images(storage_path, position)').in('collection_item_id', all.map((i) => i.id))
+    : { data: [] };
+  const img = new Map<string, string>();
+  for (const l of (pics ?? []) as { collection_item_id: string; listing_images: { storage_path: string; position: number }[] | null }[]) {
+    const first = [...(l.listing_images ?? [])].sort((a, b) => a.position - b.position)[0];
+    if (first && !img.has(l.collection_item_id)) img.set(l.collection_item_id, first.storage_path);
+  }
   const shown = all.filter((i) => (t === 'sef' ? i.location === 'vault' : t === 'prodaja' ? listed.has(i.id) : t === 'razmena' ? i.open_to_trade : t === 'gradirane' ? i.grader && i.grader !== 'raw' : true));
   const TABS: [string, string, number][] = [
     ['sve', 'Sve', all.length],
@@ -64,9 +71,6 @@ export default async function Collection({ searchParams }: { searchParams: Promi
           <Link href="/prodaj" className="btn btn-red">
             Nova objava
           </Link>
-          <Link href={`/u/${profile?.username}`} className="btn btn-ghost" style={{ color: '#fff', borderColor: 'var(--bc-line-dk)' }}>
-            Javna vitrina
-          </Link>
         </div>
       </section>
 
@@ -85,13 +89,13 @@ export default async function Collection({ searchParams }: { searchParams: Promi
               {shown.map((i) => (
                 <article key={i.id} className="tile">
                   <div className="tile-media">
-                    <CardArt seed={i.id} grade={gradeLabel(i.grader, i.grade)} />
+                    <CardArt seed={i.id} grade={gradeLabel(i.grader, i.grade)} image={listingImage(img.get(i.id))} label={i.title} />
                     <span className="tile-tag">{LOC[i.location] ?? i.location}</span>
                   </div>
                   <div className="tile-body">
                     <span className="tile-title">{i.title}</span>
                     <span className="mono muted" style={{ fontSize: 12 }}>
-                      {i.passport_code ? `#${i.passport_code}` : ''} {i.is_public ? '· javno' : '· privatno'}
+                      {i.passport_code ? `#${i.passport_code}` : ''}
                     </span>
                     <span className="mono" style={{ fontSize: 14 }}>
                       {i.estimated_value_cents ? money(i.estimated_value_cents, i.currency) : 'Bez procene'}
@@ -111,11 +115,6 @@ export default async function Collection({ searchParams }: { searchParams: Promi
                         <input type="hidden" name="open_to_trade" value={i.open_to_trade ? '0' : '1'} />
                         <SubmitButton className="btn btn-sm btn-ghost">{i.open_to_trade ? '✓ Razmena' : 'Za razmenu'}</SubmitButton>
                       </form>
-                      <form action={updateCollectionItem}>
-                        <input type="hidden" name="id" value={i.id} />
-                        <input type="hidden" name="is_public" value={i.is_public ? '0' : '1'} />
-                        <SubmitButton className="btn btn-sm btn-ghost">{i.is_public ? 'Sakrij' : 'Prikaži'}</SubmitButton>
-                      </form>
                       {!listed.has(i.id) ? (
                         <form action={deleteCollectionItem}>
                           <input type="hidden" name="id" value={i.id} />
@@ -130,7 +129,7 @@ export default async function Collection({ searchParams }: { searchParams: Promi
           ) : (
             <div className="empty">
               <span className="empty-t">{all.length ? 'Nema kartica u ovom filteru' : 'Kolekcija je prazna'}</span>
-              <span className="muted">Dodaj prvu karticu desno ili objavi oglas. Kupljene kartice se ovde pojavljuju same.</span>
+              <span className="muted">Kartice koje objaviš ili kupiš na sajtu ovde se pojavljuju same.</span>
             </div>
           )}
 
@@ -159,41 +158,6 @@ export default async function Collection({ searchParams }: { searchParams: Promi
         </section>
 
         <aside className="stack">
-          <section className="card stack">
-            <h3>Dodaj karticu u kolekciju</h3>
-            <ActionForm action={addCollectionItem} submit="Dodaj">
-              <label className="fld">
-                Kartica
-                <AutoFixInput className="inp" name="title" required placeholder="2026 Topps Chrome F1 · Refractor" />
-              </label>
-              <div className="row" style={{ gap: 8, flexWrap: 'nowrap' }}>
-                <label className="fld" style={{ flex: 1 }}>
-                  Stanje
-                  <select className="inp" name="grader" defaultValue="raw">
-                    <option value="raw">RAW</option>
-                    <option value="psa">PSA</option>
-                    <option value="bgs">BGS</option>
-                    <option value="sgc">SGC</option>
-                    <option value="pca">PCA</option>
-                  </select>
-                </label>
-                <label className="fld" style={{ width: 90 }}>
-                  Ocena
-                  <input className="inp" name="grade" inputMode="decimal" />
-                </label>
-              </div>
-              <label className="fld">
-                Procena vrednosti (RSD)
-                <input className="inp" name="value" inputMode="decimal" />
-              </label>
-              <label className="chk">
-                <input type="checkbox" name="is_public" defaultChecked /> Prikaži u javnoj vitrini
-              </label>
-              <label className="chk">
-                <input type="checkbox" name="open_to_trade" /> Otvoren za razmenu
-              </label>
-            </ActionForm>
-          </section>
           <section className="card stack">
             <span className="kicker">Lista želja · alarm</span>
             {wish && wish.length ? (

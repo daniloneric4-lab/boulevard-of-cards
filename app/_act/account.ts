@@ -22,15 +22,6 @@ export async function saveAccount(_: State, form: FormData): Promise<State> {
     bio: g('bio').slice(0, 500) || null,
     collects: g('collects').slice(0, 200) || null,
   };
-  const file = form.get('avatar') as File | null;
-  if (file && file.size > 0) {
-    if (file.size > 3 * 1024 * 1024) return { ok: false, msg: 'Slika profila je veća od 3 MB.' };
-    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
-    const path = `${user.id}/avatar-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from('avatars').upload(path, file, { contentType: file.type || 'image/jpeg', upsert: true });
-    if (error) return { ok: false, msg: 'Slika profila nije otpremljena.' };
-    patch.avatar_url = path;
-  }
   const { error: e1 } = await supabase.from('profiles').update(patch).eq('id', user.id);
   if (e1) return { ok: false, msg: e1.code === '23505' ? 'To korisničko ime je zauzeto.' : 'Čuvanje profila nije uspelo.' };
   const prefs: Record<string, boolean> = {};
@@ -64,4 +55,19 @@ export async function saveOnboarding(form: FormData) {
   }
   revalidatePath('/', 'layout');
   redirect('/?dobrodosao=1');
+}
+
+// Slika je već otpremljena iz pregledača; ovde samo upisujemo adresu u profil.
+export async function setAvatar(url: string): Promise<State> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, msg: 'Nisi prijavljen.' };
+  const base = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/listing-images/${user.id}/`;
+  if (!url.startsWith(base)) return { ok: false, msg: 'Neispravna slika.' };
+  const { error } = await supabase.from('profiles').update({ avatar_url: url }).eq('id', user.id);
+  if (error) return { ok: false, msg: 'Slika nije sačuvana.' };
+  revalidatePath('/', 'layout');
+  return { ok: true, msg: 'Sačuvano.' };
 }

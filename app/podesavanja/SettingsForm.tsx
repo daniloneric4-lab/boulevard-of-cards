@@ -2,8 +2,10 @@
 import { useActionState } from 'react';
 import { saveAccount } from '@/app/_act/account';
 import { SPORTS } from '@/lib/format';
+import AvatarPicker from '@/components/AvatarPicker';
 
 type Props = {
+  me: { id: string; avatar: string | null };
   p: { username: string; display_name: string; city: string; country: string; bio: string; collects: string };
   s: { script: string; sports: string[]; notify_email: boolean; notify_push: boolean; prefs: Record<string, boolean> };
 };
@@ -17,17 +19,14 @@ const NOTIFS: [string, string][] = [
   ['news', 'Novi izlasci i preorder kalendar'],
 ];
 
-export default function SettingsForm({ p, s }: Props) {
+export default function SettingsForm({ me, p, s }: Props) {
   const [state, run, pending] = useActionState(saveAccount, { ok: false, msg: '' });
   const pref = (k: string) => s.prefs[k] ?? true;
   return (
     <form action={run} className="stack" style={{ gap: 24 }}>
       <section id="profil" className="card stack">
         <h3>Profil</h3>
-        <label className="fld">
-          Slika profila (do 3 MB)
-          <input className="inp" type="file" name="avatar" accept="image/*" />
-        </label>
+        <AvatarPicker userId={me.id} current={me.avatar} name={p.display_name || p.username} />
         <div className="row" style={{ gap: 10 }}>
           <label className="fld" style={{ flex: '1 1 200px' }}>
             Korisničko ime

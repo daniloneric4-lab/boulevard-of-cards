@@ -24,6 +24,7 @@ export default async function Settings() {
       </div>
       <div className="side">
         <SettingsForm
+          me={{ id: user.id, avatar: full?.avatar_url ?? null }}
           p={{
             username: full?.username ?? '',
             display_name: full?.display_name ?? '',

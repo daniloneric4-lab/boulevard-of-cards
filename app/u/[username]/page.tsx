@@ -8,7 +8,7 @@ import CardArt from '@/components/CardArt';
 import ListingTile from '@/components/ListingTile';
 import SubmitButton from '@/components/SubmitButton';
 import { startConversation, toggleFollow } from '@/app/_act/market';
-import { date, gradeLabel, money } from '@/lib/format';
+import { date, gradeLabel, listingImage, money } from '@/lib/format';
 import { LISTING_SELECT, type ListingRow } from '@/lib/listings';
 
 export const dynamic = 'force-dynamic';
@@ -27,7 +27,7 @@ export default async function PublicProfile({ params, searchParams }: { params: 
   const me = user?.id === p.id;
   const [{ data: listings }, { data: shown }, { data: wants }, { data: reviews }, { count: followers }, fol, matches, { count: sold }] = await Promise.all([
     supabase.from('listings').select(LISTING_SELECT).eq('seller_id', p.id).eq('status', 'active').order('created_at', { ascending: false }).limit(24),
-    supabase.from('collection_items').select('id, title, grader, grade, open_to_trade, estimated_value_cents, currency').eq('owner_id', p.id).eq('is_public', true).order('created_at', { ascending: false }).limit(48),
+    supabase.from('collection_items').select('id, title, grader, grade, open_to_trade, estimated_value_cents, currency').eq('owner_id', p.id).order('created_at', { ascending: false }).limit(48),
     supabase.from('wishlist').select('id, query, max_price_cents, card_catalog(player, set_name, parallel)').eq('user_id', p.id).eq('is_public', true).limit(30),
     supabase.from('reviews').select('rating, comment, created_at, reviewer:profiles!reviews_reviewer_id_fkey(username)').eq('reviewee_id', p.id).order('created_at', { ascending: false }).limit(20),
     supabase.from('follows').select('follower_id', { count: 'exact', head: true }).eq('followee_id', p.id),
@@ -36,6 +36,13 @@ export default async function PublicProfile({ params, searchParams }: { params: 
     supabase.from('listings').select('id', { count: 'exact', head: true }).eq('seller_id', p.id).eq('status', 'sold'),
   ]);
   const following = !!fol.data;
+  const ids = (shown ?? []).map((c) => c.id);
+  const { data: pics } = ids.length ? await supabase.from('listings').select('collection_item_id, listing_images(storage_path, position)').in('collection_item_id', ids) : { data: [] };
+  const img = new Map<string, string>();
+  for (const l of (pics ?? []) as { collection_item_id: string; listing_images: { storage_path: string; position: number }[] | null }[]) {
+    const first = [...(l.listing_images ?? [])].sort((a, b) => a.position - b.position)[0];
+    if (first && !img.has(l.collection_item_id)) img.set(l.collection_item_id, first.storage_path);
+  }
   const m = (Array.isArray(matches.data) ? matches.data[0] : matches.data) as { on_my_wishlist: number; i_have_their_wants: number } | null;
   const R = reviews ?? [];
   const rating = R.length ? (R.reduce((s, r) => s + r.rating, 0) / R.length).toFixed(1) : '—';
@@ -123,7 +130,7 @@ export default async function PublicProfile({ params, searchParams }: { params: 
       <nav className="tabs">
         {[
           ['prodaja', `Na prodaju`],
-          ['vitrina', 'Vitrina'],
+          ['vitrina', 'Kolekcija'],
           ['trazi', `Šta @${p.username} traži`],
           ['ocene', 'Ocene kupaca'],
         ].map(([k, l]) => (
@@ -149,7 +156,7 @@ export default async function PublicProfile({ params, searchParams }: { params: 
             {shown.map((c) => (
               <div key={c.id} className="tile">
                 <div className="tile-media">
-                  <CardArt seed={c.id} grade={gradeLabel(c.grader, c.grade)} />
+                  <CardArt seed={c.id} grade={gradeLabel(c.grader, c.grade)} image={listingImage(img.get(c.id))} label={c.title} />
                   {c.open_to_trade ? <span className="tile-time">ZA RAZMENU</span> : null}
                 </div>
                 <div className="tile-body">
@@ -162,7 +169,7 @@ export default async function PublicProfile({ params, searchParams }: { params: 
             ))}
           </div>
         ) : (
-          <div className="alert alert-info">Vitrina je prazna.</div>
+          <div className="alert alert-info">Kolekcija je prazna.</div>
         )
       ) : t === 'trazi' ? (
         wants && wants.length ? (
@@ -201,17 +208,6 @@ export default async function PublicProfile({ params, searchParams }: { params: 
         <div className="alert alert-info">Još nema ocena. Ocenu može da ostavi samo kupac koji je primio porudžbinu.</div>
       )}
 
-      <div className="card row between">
-        <div className="stack" style={{ gap: 2 }}>
-          <span className="kicker">Vitrina za deljenje</span>
-          <span className="mono" style={{ fontSize: 14 }}>
-            boulevard-of-cards.vercel.app/u/{p.username}
-          </span>
-        </div>
-        <span className="muted" style={{ fontSize: 13 }}>
-          Javna stranica sa svim izloženim karticama
-        </span>
-      </div>
     </div>
   );
 }
