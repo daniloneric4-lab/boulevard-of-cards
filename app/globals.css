@@ -398,7 +398,7 @@ a.lnk:hover { text-decoration: underline; }
   .sf { position: absolute; bottom: 0; --h: min(92vh, 1000px); --w: calc(var(--h) * .5625); height: var(--h); width: var(--w); }
   .sf-L { left: calc(50% - 520px - var(--w) + 200px); }
   .sf-R { right: calc(50% - 520px - var(--w) + 200px); }
-  .sf img { width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; display: block; }
+  .sf img { width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; display: block; transform-origin: 50% 100%; }
   .sf img.kick { animation: sfKick .3s ease-out; }
   .sf-flash { position: absolute; inset: 0; opacity: 0; background: radial-gradient(closest-side, rgba(255,255,255,.95), rgba(255,255,255,0)); }
   .sf-flash.go { animation: sfFlash .32s ease-out; }
