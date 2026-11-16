@@ -14,6 +14,7 @@ export default function DemoTiles({
   href = '/prodaj',
   kind = 'all',
   repeat = 1,
+  label = 'Još nema pravih oglasa, ovako će izgledati. Primeri nisu na prodaju.',
 }: {
   sport?: string;
   count?: number;
@@ -24,6 +25,7 @@ export default function DemoTiles({
   kind?: 'cards' | 'boxes' | 'all';
   /** koliko puta da se primeri ponove (za duže liste) */
   repeat?: number;
+  label?: string;
 }) {
   const pick = (src: Demo[], n: number) => {
     let list = src.filter((d) => (!sport || d.sport === sport) && (!mode || d.mode === mode));
@@ -35,7 +37,7 @@ export default function DemoTiles({
   return (
     <div className="stack">
       <span className="muted" style={{ fontSize: 13 }}>
-        Još nema pravih oglasa, ovako će izgledati. Primeri nisu na prodaju.
+        {label}
       </span>
       <div className="grid-tiles">
         {[...Array(Math.max(1, repeat))].flatMap((_, r) => [...cards, ...boxes].map((d) => ({ ...d, k: d.id + '-' + r }))).map((d: Demo & { k: string }) => (
