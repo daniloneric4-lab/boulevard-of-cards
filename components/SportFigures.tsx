@@ -3,12 +3,13 @@
 import { useEffect, useRef } from 'react';
 
 // Veliki ilustrovani likovi iza kartica (levo rival, desno pobednik).
-// Kad se skroluje u novi deo stranice, levo "škljocne" serija fotki, pa desno odgovori.
+// Kad se skroluje u novi deo stranice, levo se smeni serija fotki, pa desno odgovori.
 // Slike: /public/vizuali/<sport>/<L|R><scena>-<frejm>.webp, frejm 0 je originalna (završna) slika scene.
 
 type Side = 'L' | 'R';
-const SETS: Record<string, { L: number[]; R: number[] }> = {
-  f1: { L: [7, 5, 7, 7], R: [6, 7, 7, 7] },
+// L/R: broj frejmova po sceni; zoom: uvećanje po sceni (od dna) da likovi budu iste visine
+const SETS: Record<string, { L: number[]; R: number[]; zoom?: { L: number[]; R: number[] } }> = {
+  f1: { L: [7, 5, 7, 7], R: [6, 7, 7, 7], zoom: { L: [0.86, 1, 1, 1], R: [1.14, 1, 1, 1] } },
 };
 
 export default function SportFigures({ sport }: { sport: string }) {
@@ -26,17 +27,13 @@ export default function SportFigures({ sport }: { sport: string }) {
 
     const parts = (['L', 'R'] as Side[]).map((side) => {
       const box = el.querySelector<HTMLDivElement>(`[data-side="${side}"]`)!;
-      return { side, img: box.querySelector('img')!, flash: box.querySelector<HTMLDivElement>('.sf-flash')!, timer: 0 as unknown as ReturnType<typeof setTimeout> | 0 };
+      return { side, img: box.querySelector('img')!, timer: 0 as unknown as ReturnType<typeof setTimeout> | 0 };
     });
 
-    const show = (p: (typeof parts)[number], s: number, f: number, quiet = false) => {
+    // bez blica: frejmovi se samo smenjuju, kao serija fotki
+    const show = (p: (typeof parts)[number], s: number, f: number, _quiet = false) => {
       p.img.src = src(p.side, s, f);
-      if (quiet || reduce) return;
-      p.flash.classList.remove('go');
-      p.img.classList.remove('kick');
-      void p.flash.offsetWidth;
-      p.flash.classList.add('go');
-      p.img.classList.add('kick');
+      p.img.style.transform = `scale(${set.zoom?.[p.side][s] ?? 1})`;
     };
     const burst = (p: (typeof parts)[number], s: number) => {
       if (p.timer) clearTimeout(p.timer);
@@ -46,7 +43,7 @@ export default function SportFigures({ sport }: { sport: string }) {
       const step = () => {
         show(p, s, seq[k]);
         k++;
-        if (k < seq.length) p.timer = setTimeout(step, k === seq.length - 1 ? 240 : 150);
+        if (k < seq.length) p.timer = setTimeout(step, k === seq.length - 1 ? 260 : 170);
         else p.timer = 0;
       };
       if (reduce) show(p, s, 0, true);
@@ -90,8 +87,7 @@ export default function SportFigures({ sport }: { sport: string }) {
       {(['L', 'R'] as Side[]).map((side) => (
         <div key={side} className={'sf sf-' + side} data-side={side}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`/vizuali/${sport}/${side}0-0.webp`} alt="" decoding="async" />
-          <div className="sf-flash" />
+          <img src={`/vizuali/${sport}/${side}0-0.webp`} alt="" decoding="async" style={{ transform: `scale(${set.zoom?.[side][0] ?? 1})` }} />
         </div>
       ))}
     </div>
