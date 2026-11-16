@@ -406,6 +406,8 @@ a.lnk:hover { text-decoration: underline; }
   .has-figs .hero-shop { z-index: 2; }
   .has-figs .grid-tiles .tile { opacity: 1 !important; }
   .has-figs .filters, .has-figs .card, .has-figs .card-dark { position: relative; }
+  .has-figs .wrap.section > .row.between, .has-figs .stack > span.muted { background: rgba(255,255,255,.9); border-radius: 10px; padding: 6px 10px; align-self: flex-start; }
+  .has-figs .wrap.section > .row.between { align-self: stretch; }
 }
 @keyframes sfFlash { 0% { opacity: .95; } 100% { opacity: 0; } }
 @keyframes sfKick { 0% { transform: scale(1.035); } 100% { transform: scale(1); } }
