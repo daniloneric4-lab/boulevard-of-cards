@@ -220,7 +220,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<SP>
       ) : filtered || q ? (
         <div className="alert alert-info">Nema ničega za ovaj izbor.</div>
       ) : (
-        <DemoTiles sport={sports[0]} kind={vrsta === 'kutije' ? 'boxes' : vrsta === 'kartice' ? 'cards' : 'all'} />
+        <DemoTiles sport={sports[0]} kind={vrsta === 'kutije' ? 'boxes' : vrsta === 'kartice' ? 'cards' : 'all'} repeat={figs ? 6 : 1} />
       )}
 
       <div className="two" style={{ marginTop: 8 }}>
