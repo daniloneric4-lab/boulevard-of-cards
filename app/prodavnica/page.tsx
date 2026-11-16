@@ -7,6 +7,7 @@ import AutoForm from '@/components/AutoForm';
 import { SPORTS } from '@/lib/format';
 import ListingTile from '@/components/ListingTile';
 import DemoTiles from '@/components/DemoTiles';
+import { hasHero } from '@/lib/heroes';
 import SportFigures from '@/components/SportFigures';
 import { LISTING_SELECT, type ListingRow } from '@/lib/listings';
 import { correctQuery } from '@/lib/spell';
@@ -99,7 +100,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<SP>
 
   const hero = vrsta === 'oprema' ? HERO.oprema : sports.length === 1 ? HERO[sports[0]] ?? HERO[''] : HERO[''];
 
-  const figs = sports.length === 1 && vrsta !== 'oprema' && sports[0] === 'f1' ? sports[0] : '';
+  const figs = sports.length === 1 && vrsta !== 'oprema' && hasHero(sports[0]) ? sports[0] : '';
 
   return (
     <div className={figs ? 'has-figs' : undefined}>
