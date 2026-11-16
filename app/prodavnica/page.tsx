@@ -7,6 +7,7 @@ import AutoForm from '@/components/AutoForm';
 import { SPORTS } from '@/lib/format';
 import ListingTile from '@/components/ListingTile';
 import DemoTiles from '@/components/DemoTiles';
+import SportFigures from '@/components/SportFigures';
 import { LISTING_SELECT, type ListingRow } from '@/lib/listings';
 import { correctQuery } from '@/lib/spell';
 
@@ -98,8 +99,11 @@ export default async function Shop({ searchParams }: { searchParams: Promise<SP>
 
   const hero = vrsta === 'oprema' ? HERO.oprema : sports.length === 1 ? HERO[sports[0]] ?? HERO[''] : HERO[''];
 
+  const figs = sports.length === 1 && vrsta !== 'oprema' && sports[0] === 'f1' ? sports[0] : '';
+
   return (
-    <>
+    <div className={figs ? 'has-figs' : undefined}>
+    {figs ? <SportFigures sport={figs} /> : null}
     <section className="hero hero-shop" aria-label="Prodavnica">
       <RotatingVideo key={sport ?? 'all'} category={sports.length === 1 && ['football', 'f1', 'nba', 'nfl', 'other'].includes(sports[0]) ? sports[0] : 'all'} />
       <div className="hero-in">
@@ -236,7 +240,7 @@ export default async function Shop({ searchParams }: { searchParams: Promise<SP>
         </div>
       </div>
     </div>
-    </>
+    </div>
   );
 }
 
