@@ -389,3 +389,24 @@ a.lnk:hover { text-decoration: underline; }
 .demo-tag { position: absolute; bottom: 12px; left: 12px; font: 600 10px var(--font-mono); letter-spacing: .08em; padding: 4px 7px; border-radius: 5px; background: #fff; color: var(--bc-carbon); }
 .filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; padding: 16px; border-radius: 16px; background: var(--bc-surface); }
 .filters .fld { flex: 1 1 150px; font-size: 13px; }
+
+/* Ilustrovani likovi iza kartica (prodavnica, po sportu) */
+.sport-figs { display: none; }
+@media (min-width: 1100px) {
+  .sport-figs { display: block; position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity .5s ease; }
+  .sport-figs.on { opacity: 1; }
+  .sf { position: absolute; bottom: 0; --h: min(92vh, 1000px); --w: calc(var(--h) * .5625); height: var(--h); width: var(--w); }
+  .sf-L { left: calc(50% - 520px - var(--w) + 200px); }
+  .sf-R { right: calc(50% - 520px - var(--w) + 200px); }
+  .sf img { width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; display: block; }
+  .sf img.kick { animation: sfKick .3s ease-out; }
+  .sf-flash { position: absolute; inset: 0; opacity: 0; background: radial-gradient(closest-side, rgba(255,255,255,.95), rgba(255,255,255,0)); }
+  .sf-flash.go { animation: sfFlash .32s ease-out; }
+  .has-figs .wrap.section { max-width: 1040px; position: relative; z-index: 1; }
+  .has-figs .hero-shop { z-index: 2; }
+  .has-figs .grid-tiles .tile { opacity: 1 !important; }
+  .has-figs .filters, .has-figs .card, .has-figs .card-dark { position: relative; }
+}
+@keyframes sfFlash { 0% { opacity: .95; } 100% { opacity: 0; } }
+@keyframes sfKick { 0% { transform: scale(1.035); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .sf img.kick, .sf-flash.go { animation: none; } }
