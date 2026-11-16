@@ -395,9 +395,9 @@ a.lnk:hover { text-decoration: underline; }
 @media (min-width: 1100px) {
   .sport-figs { display: block; position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity .6s ease; }
   .sport-figs.on { opacity: 1; }
-  .sf { position: absolute; top: 0; bottom: 0; width: min(300px, calc((100vw - 1040px) / 2 - 20px)); background: #f9f7ef; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
-  .sf-L { left: 0; box-shadow: inset -1px 0 0 var(--bc-line, #e5e5e5); }
-  .sf-R { right: 0; box-shadow: inset 1px 0 0 var(--bc-line, #e5e5e5); }
+  .sf { position: absolute; top: 0; bottom: 0; width: min(300px, calc((100vw - 1040px) / 2 - 20px)); background: #fff; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
+  .sf-L { left: 0; }
+  .sf-R { right: 0; }
   .sf video { width: 100%; max-height: calc(100vh - 90px); aspect-ratio: 9 / 16; object-fit: contain; object-position: 50% 100%; display: block; }
   .has-figs .wrap.section { max-width: 1040px; position: relative; z-index: 1; }
   .has-figs .hero-shop { z-index: 2; }
