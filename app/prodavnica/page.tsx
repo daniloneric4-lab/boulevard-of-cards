@@ -222,6 +222,9 @@ export default async function Shop({ searchParams }: { searchParams: Promise<SP>
       ) : (
         <DemoTiles sport={sports[0]} kind={vrsta === 'kutije' ? 'boxes' : vrsta === 'kartice' ? 'cards' : 'all'} repeat={figs ? 6 : 1} />
       )}
+      {figs && items.length > 0 && items.length < 24 ? (
+        <DemoTiles sport={sports[0]} kind={vrsta === 'kutije' ? 'boxes' : vrsta === 'kartice' ? 'cards' : 'all'} repeat={5} label="Primeri kako će izgledati ostali oglasi. Nisu na prodaju." />
+      ) : null}
 
       <div className="two" style={{ marginTop: 8 }}>
         <div className="card-dark stack">
