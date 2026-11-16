@@ -13,6 +13,7 @@ export default function DemoTiles({
   cta = 'Postavi svoju',
   href = '/prodaj',
   kind = 'all',
+  repeat = 1,
 }: {
   sport?: string;
   count?: number;
@@ -21,6 +22,8 @@ export default function DemoTiles({
   href?: string;
   /** 'cards' samo kartice, 'boxes' samo kutije, 'all' i jedno i drugo */
   kind?: 'cards' | 'boxes' | 'all';
+  /** koliko puta da se primeri ponove (za duže liste) */
+  repeat?: number;
 }) {
   const pick = (src: Demo[], n: number) => {
     let list = src.filter((d) => (!sport || d.sport === sport) && (!mode || d.mode === mode));
@@ -35,8 +38,8 @@ export default function DemoTiles({
         Još nema pravih oglasa, ovako će izgledati. Primeri nisu na prodaju.
       </span>
       <div className="grid-tiles">
-        {[...cards, ...boxes].map((d: Demo) => (
-          <article key={d.id} className="tile" style={{ opacity: 0.92 }}>
+        {[...Array(Math.max(1, repeat))].flatMap((_, r) => [...cards, ...boxes].map((d) => ({ ...d, k: d.id + '-' + r }))).map((d: Demo & { k: string }) => (
+          <article key={d.k} className="tile" style={{ opacity: 0.92 }}>
             <div className="tile-media">
               {d.box ? <BoxArt seed={d.id} name={d.name} format={d.format} /> : <CardArt seed={d.id} grade={d.grade} />}
               <span className="tile-tag">{sportLabel(d.sport)}</span>
