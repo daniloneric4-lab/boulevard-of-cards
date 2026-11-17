@@ -4,7 +4,8 @@ import { useEffect, useRef } from 'react';
 import { STORIES, hasHero } from '@/lib/heroes';
 
 // Ilustrovane scene sa strane liste kartica. Svaka scena stoji na svom mestu u stranici
-// (skroluje se zajedno sa karticama) i pusti se kad se do nje dođe; ostaje na poslednjem kadru.
+// (skroluje se zajedno sa karticama). Levi i desni video iste scene kreću zajedno kad se
+// do scene dođe i ostaju na poslednjem kadru.
 
 export default function SportFigures({ sport }: { sport: string }) {
   const root = useRef<HTMLDivElement>(null);
@@ -15,6 +16,19 @@ export default function SportFigures({ sport }: { sport: string }) {
     const box = root.current;
     const slots = Array.from(box.querySelectorAll<HTMLDivElement>('.sf'));
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const started = new Set<string>();
+
+    // svaki video: utišan (autoplay), prikaži prvi kadar čim se učita
+    slots.forEach((s) => {
+      const v = s.querySelector('video')!;
+      v.muted = true;
+      v.defaultMuted = true;
+      v.setAttribute('muted', '');
+      const show = () => s.classList.add('on');
+      if (v.readyState >= 2) show();
+      else v.addEventListener('loadeddata', show, { once: true });
+      v.addEventListener('error', () => { s.classList.remove('on'); }, { once: true });
+    });
 
     const layout = () => {
       const host = box.parentElement!;
@@ -24,7 +38,8 @@ export default function SportFigures({ sport }: { sport: string }) {
       const top = grids[0].getBoundingClientRect().top + window.scrollY - hostTop;
       const last = grids[grids.length - 1].getBoundingClientRect();
       const bottom = last.bottom + window.scrollY - hostTop;
-      const gutter = (document.documentElement.clientWidth - 1040) / 2;
+      const vw = document.documentElement.clientWidth;
+      const gutter = (vw - 1040) / 2;
       const w = Math.min(300, gutter - 24);
       box.classList.toggle('off', w < 160);
       const h = (w * 16) / 9;
@@ -33,40 +48,61 @@ export default function SportFigures({ sport }: { sport: string }) {
         const at = Number(s.dataset.at);
         s.style.width = `${w}px`;
         s.style.top = `${top + at * span}px`;
-        s.style.left = s.dataset.side === 'L' ? `${(gutter - w) / 2}px` : `${document.documentElement.clientWidth - gutter + (gutter - w) / 2}px`;
+        s.style.left = s.dataset.side === 'L' ? `${(gutter - w) / 2}px` : `${vw - gutter + (gutter - w) / 2}px`;
       });
     };
 
-    const play = (s: HTMLDivElement) => {
-      if (s.dataset.done) return;
-      s.dataset.done = '1';
+    const playSlot = (s: HTMLDivElement) => {
       const v = s.querySelector('video')!;
       const list: string[] = JSON.parse(s.dataset.list || '[]');
       let i = 0;
+      const tryPlay = () => {
+        const p = v.play();
+        if (p) p.catch(() => { v.muted = true; v.play().catch(() => {}); });
+      };
       const next = () => {
         if (i >= list.length) return;
-        v.src = list[i++];
+        const src = list[i++];
+        if (!v.currentSrc.endsWith(src)) { v.src = src; v.load(); }
         if (reduce && i === list.length) {
-          v.addEventListener('loadedmetadata', () => { v.currentTime = Math.max(0, v.duration - 0.05); }, { once: true });
+          const end = () => { v.currentTime = Math.max(0, v.duration - 0.05); };
+          if (v.readyState >= 1) end(); else v.addEventListener('loadedmetadata', end, { once: true });
           return;
         }
-        v.play().catch(() => {});
+        if (v.readyState >= 3) tryPlay();
+        else v.addEventListener('canplay', tryPlay, { once: true });
       };
       v.addEventListener('ended', next);
       next();
-      s.classList.add('on');
     };
 
-    const io = new IntersectionObserver(
-      (es) => es.forEach((e) => { if (e.isIntersecting) play(e.target as HTMLDivElement); }),
-      { threshold: 0.45 },
-    );
+    // scena kreće kad bilo koji njen video uđe u ekran; pokreće obe strane zajedno
+    const check = () => {
+      const vh = window.innerHeight;
+      slots.forEach((s) => {
+        const k = s.dataset.scene!;
+        if (started.has(k)) return;
+        const r = s.getBoundingClientRect();
+        if (r.height && r.top < vh * 0.8 && r.bottom > vh * 0.2) {
+          started.add(k);
+          slots.filter((x) => x.dataset.scene === k).forEach(playSlot);
+        }
+      });
+    };
+
     layout();
-    slots.forEach((s) => io.observe(s));
-    const ro = new ResizeObserver(layout);
+    check();
+    const onScroll = () => check();
+    const onResize = () => { layout(); check(); };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onResize);
+    const ro = new ResizeObserver(onResize);
     ro.observe(document.body);
-    window.addEventListener('resize', layout);
-    return () => { io.disconnect(); ro.disconnect(); window.removeEventListener('resize', layout); };
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onResize);
+      ro.disconnect();
+    };
   }, [sport]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!scenes.length) return null;
@@ -74,8 +110,8 @@ export default function SportFigures({ sport }: { sport: string }) {
     <div ref={root} className="sport-figs" aria-hidden="true">
       {scenes.flatMap((sc, k) =>
         (['L', 'R'] as const).filter((side) => sc[side]?.length).map((side) => (
-          <div key={`${k}${side}`} className="sf" data-side={side} data-at={sc.at} data-list={JSON.stringify(sc[side])}>
-            <video src={sc[side]![0]} muted playsInline preload="metadata" />
+          <div key={`${k}${side}`} className="sf" data-scene={k} data-side={side} data-at={sc.at} data-list={JSON.stringify(sc[side])}>
+            <video src={sc[side]![0]} muted playsInline preload="auto" />
           </div>
         )),
       )}
