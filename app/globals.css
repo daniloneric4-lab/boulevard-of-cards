@@ -390,15 +390,15 @@ a.lnk:hover { text-decoration: underline; }
 .filters { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; padding: 16px; border-radius: 16px; background: var(--bc-surface); }
 .filters .fld { flex: 1 1 150px; font-size: 13px; }
 
-/* Bočne trake sa ilustrovanim video scenama (prodavnica, po sportu) */
+/* Ilustrovane scene sa strane liste kartica (stoje u stranici, ne prate ekran) */
 .sport-figs { display: none; }
 @media (min-width: 1100px) {
-  .sport-figs { display: block; position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity .6s ease; }
-  .sport-figs.on { opacity: 1; }
-  .sf { position: absolute; top: 0; bottom: 0; width: min(300px, calc((100vw - 1040px) / 2 - 20px)); background: #fff; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
-  .sf-L { left: 0; }
-  .sf-R { right: 0; }
-  .sf video { width: 100%; max-height: calc(100vh - 90px); aspect-ratio: 9 / 16; object-fit: contain; object-position: 50% 100%; display: block; }
+  .has-figs { position: relative; }
+  .sport-figs { display: block; position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .sport-figs.off { display: none; }
+  .sf { position: absolute; opacity: 0; transition: opacity .5s ease; }
+  .sf.on { opacity: 1; }
+  .sf video { width: 100%; aspect-ratio: 9 / 16; display: block; background: #fff; }
   .has-figs .wrap.section { max-width: 1040px; position: relative; z-index: 1; }
   .has-figs .hero-shop { z-index: 2; }
 }
