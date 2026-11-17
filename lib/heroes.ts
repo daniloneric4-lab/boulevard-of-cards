@@ -1,11 +1,18 @@
-// Glavni lik (pobednik) po sportu: kratak ilustrovani video koji se nasumično pojavljuje sa strane prodavnice.
-// Fajlovi: /public/vizuali/heroji/<sport>.mp4
-// from: sa koje strane lik ulazi u originalnom videu; top: uvek zalepljen za gornji ugao (npr. koš)
-export const HEROES: Record<string, { from: 'L' | 'R'; top?: boolean }> = {
-  f1: { from: 'R' },
-  football: { from: 'L' },
-  nba: { from: 'L', top: true },
-  nfl: { from: 'R' },
+// Ilustrovani likovi u prodavnici, po sportu (kratki videi na beloj pozadini).
+// Priča: niz scena niz stranicu, levo rival / desno pobednik (ili obrnuto po sceni).
+// at: gde je scena po visini, kao deo visine liste kartica (0 = prvi red kartica)
+// L / R: videi u toj traci, puštaju se jedan za drugim i ostaju na poslednjem kadru
+export type Scene = { at: number; L?: string[]; R?: string[] };
+
+export const STORIES: Record<string, Scene[]> = {
+  f1: [
+    { at: 0, L: ['/vizuali/f1/scena/1L.mp4'], R: ['/vizuali/f1/scena/1R.mp4'] }, // Hunt smoren, Lauda prska šampanjac
+    { at: 0.36, L: ['/vizuali/f1/scena/2L.mp4'], R: ['/vizuali/f1/scena/2R.mp4', '/vizuali/f1/scena/3R.mp4'] }, // bolidi; Hunt se slupa, izlazi i seda
+    { at: 0.72, L: ['/vizuali/f1/scena/3L.mp4'] }, // Lauda prolazi cilj
+  ],
+  // za sada samo glavni lik desno
+  football: [{ at: 0, R: ['/vizuali/heroji/football.mp4'] }],
+  nba: [{ at: 0, R: ['/vizuali/heroji/nba.mp4'] }],
+  nfl: [{ at: 0, R: ['/vizuali/heroji/nfl.mp4'] }],
 };
-export const HERO_SPORTS = Object.keys(HEROES);
-export const hasHero = (sport: string | undefined) => !!sport && sport in HEROES;
+export const hasHero = (sport: string | undefined) => !!sport && sport in STORIES;
