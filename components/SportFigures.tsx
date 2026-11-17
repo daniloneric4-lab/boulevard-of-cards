@@ -39,16 +39,19 @@ export default function SportFigures({ sport }: { sport: string }) {
       const last = grids[grids.length - 1].getBoundingClientRect();
       const bottom = last.bottom + window.scrollY - hostTop;
       const vw = document.documentElement.clientWidth;
-      const gutter = (vw - 1040) / 2;
-      const w = Math.min(300, gutter - 24);
-      box.classList.toggle('off', w < 160);
-      const h = (w * 16) / 9;
-      const span = Math.max(0, bottom - top - h);
+      // traka ide od ivice ekrana do ivice kartica
+      const g = grids[0].getBoundingClientRect();
+      const wl = Math.max(0, g.left - 8);
+      const wr = Math.max(0, vw - g.right - 8);
+      box.classList.toggle('off', Math.min(wl, wr) < 160);
+      const span = (h: number) => Math.max(0, bottom - top - h);
       slots.forEach((s) => {
         const at = Number(s.dataset.at);
+        const L = s.dataset.side === 'L';
+        const w = L ? wl : wr;
         s.style.width = `${w}px`;
-        s.style.top = `${top + at * span}px`;
-        s.style.left = s.dataset.side === 'L' ? `${(gutter - w) / 2}px` : `${vw - gutter + (gutter - w) / 2}px`;
+        s.style.top = `${top + at * span((w * 16) / 9)}px`;
+        s.style.left = L ? '0px' : `${vw - w}px`;
       });
     };
 
