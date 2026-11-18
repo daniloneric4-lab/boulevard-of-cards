@@ -79,7 +79,9 @@ export default function SportFigures({ sport }: { sport: string }) {
         else v.addEventListener('canplay', tryPlay, { once: true });
       };
       v.addEventListener('ended', next);
-      next();
+      const delay = Number(s.dataset.delay || 0) * 1000;
+      if (delay > 0) window.setTimeout(next, delay);
+      else next();
     };
 
     // scena kreće kad bilo koji njen video uđe u ekran; pokreće obe strane zajedno
@@ -116,7 +118,7 @@ export default function SportFigures({ sport }: { sport: string }) {
     <div ref={root} className="sport-figs" aria-hidden="true">
       {scenes.flatMap((sc, k) =>
         (['L', 'R'] as const).filter((side) => sc[side]?.length).map((side) => (
-          <div key={`${k}${side}`} className="sf" data-scene={k} data-side={side} data-align={sc[side === 'L' ? 'LA' : 'RA'] || 'center'} data-at={sc.at} data-list={JSON.stringify(sc[side])}>
+          <div key={`${k}${side}`} className="sf" data-scene={k} data-side={side} data-align={sc[side === 'L' ? 'LA' : 'RA'] || 'center'} data-delay={sc[side === 'L' ? 'LD' : 'RD'] || 0} data-at={sc.at} data-list={JSON.stringify(sc[side])}>
             <video src={sc[side]![0]} muted playsInline preload="auto" />
           </div>
         )),
