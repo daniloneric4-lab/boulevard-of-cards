@@ -39,7 +39,7 @@ export default function SportFigures({ sport }: { sport: string }) {
       const last = grids[grids.length - 1].getBoundingClientRect();
       const bottom = last.bottom + window.scrollY - hostTop;
       const vw = document.documentElement.clientWidth;
-      // video stoji uz ivicu ekrana, veličine kao ranije (do 300px)
+      // levi video uz ivicu ekrana, desni uz kartice (bolid skreće u kartice); do 300px
       const g = grids[0].getBoundingClientRect();
       const wl = Math.min(300, Math.max(0, g.left - 8));
       const wr = Math.min(300, Math.max(0, vw - g.right - 8));
@@ -51,7 +51,7 @@ export default function SportFigures({ sport }: { sport: string }) {
         const w = L ? wl : wr;
         s.style.width = `${w}px`;
         s.style.top = `${top + at * span((w * 16) / 9)}px`;
-        s.style.left = L ? '0px' : `${vw - w}px`;
+        s.style.left = L ? '0px' : `${g.right + 8}px`;
       });
     };
 
