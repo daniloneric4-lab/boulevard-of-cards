@@ -39,7 +39,7 @@ export default function SportFigures({ sport }: { sport: string }) {
       const last = grids[grids.length - 1].getBoundingClientRect();
       const bottom = last.bottom + window.scrollY - hostTop;
       const vw = document.documentElement.clientWidth;
-      // levi video uz ivicu ekrana, desni uz kartice (bolid skreće u kartice); do 300px
+      // do 300px; položaj u traci po sceni: uz ivicu ekrana, uz kartice ili na sredini
       const g = grids[0].getBoundingClientRect();
       const wl = Math.min(300, Math.max(0, g.left - 8));
       const wr = Math.min(300, Math.max(0, vw - g.right - 8));
@@ -51,7 +51,10 @@ export default function SportFigures({ sport }: { sport: string }) {
         const w = L ? wl : wr;
         s.style.width = `${w}px`;
         s.style.top = `${top + at * span((w * 16) / 9)}px`;
-        s.style.left = L ? '0px' : `${g.right + 8}px`;
+        const gutter = L ? g.left : vw - g.right;
+        const a = s.dataset.align;
+        const off = a === 'edge' ? 0 : a === 'cards' ? gutter - w - 8 : (gutter - w) / 2;
+        s.style.left = L ? `${off}px` : `${vw - off - w}px`;
       });
     };
 
@@ -113,7 +116,7 @@ export default function SportFigures({ sport }: { sport: string }) {
     <div ref={root} className="sport-figs" aria-hidden="true">
       {scenes.flatMap((sc, k) =>
         (['L', 'R'] as const).filter((side) => sc[side]?.length).map((side) => (
-          <div key={`${k}${side}`} className="sf" data-scene={k} data-side={side} data-at={sc.at} data-list={JSON.stringify(sc[side])}>
+          <div key={`${k}${side}`} className="sf" data-scene={k} data-side={side} data-align={sc[side === 'L' ? 'LA' : 'RA'] || 'center'} data-at={sc.at} data-list={JSON.stringify(sc[side])}>
             <video src={sc[side]![0]} muted playsInline preload="auto" />
           </div>
         )),
