@@ -39,10 +39,10 @@ export default function SportFigures({ sport }: { sport: string }) {
       const last = grids[grids.length - 1].getBoundingClientRect();
       const bottom = last.bottom + window.scrollY - hostTop;
       const vw = document.documentElement.clientWidth;
-      // traka ide od ivice ekrana do ivice kartica
+      // video stoji uz ivicu ekrana, veličine kao ranije (do 300px)
       const g = grids[0].getBoundingClientRect();
-      const wl = Math.max(0, g.left - 8);
-      const wr = Math.max(0, vw - g.right - 8);
+      const wl = Math.min(300, Math.max(0, g.left - 8));
+      const wr = Math.min(300, Math.max(0, vw - g.right - 8));
       box.classList.toggle('off', Math.min(wl, wr) < 160);
       const span = (h: number) => Math.max(0, bottom - top - h);
       slots.forEach((s) => {
